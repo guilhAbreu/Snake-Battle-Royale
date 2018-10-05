@@ -45,4 +45,4 @@ clean:
 	$(RM) $(DIR)/*.o $(REMOTE_DIR)/*.o
 	$(RM) $(ASSETS_DIR)/*.dat
 	$(RM) $(STAT_DIR)/*.est
-	touch $(ERROR_FILE)
+	>$(ERROR_FILE)
