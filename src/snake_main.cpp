@@ -26,7 +26,7 @@ bool keyboard_map(int c, std::vector<Audio::Sample* > asamples, Audio::Player *b
                   Audio::Player *soundboard_player, Audio::Player *background_player, Fisica *f, int *impulse);
 Snake *create_snake(unsigned int length); // create snake with length bodys
 void record_msg(int record);
-void bg_music_msg();
+void bg_music_msg(Teclado *teclado);
 
 int main (){
   Snake *snake = create_snake(50);
@@ -40,12 +40,12 @@ int main (){
   Tela *tela = new Tela(l, &f->food_pos, 20, 20, 20, 20);
   tela->init();
   
-  // give the option of do  not load background music file
-  bg_music_msg();
-
   // begin keyboard interface
   Teclado *teclado = new Teclado();
   teclado->init();
+
+  // give the option of do  not load background music file
+  bg_music_msg(teclado);
 
   // init asamples
   std::vector<Audio::Sample* > asamples(16);
@@ -138,7 +138,7 @@ int main (){
   return 0;
 }
 
-void bg_music_msg(){
+void bg_music_msg(Teclado *teclado){
   bool ok = false;
   attron(COLOR_PAIR(MSG_PAIR));
   while (!ok){
@@ -149,7 +149,7 @@ void bg_music_msg(){
     move((int)LINES/2 + 2, -10 + (int)COLS/2);
     printw("AND IT CAN LAST TOO MUCH TIME TO LOAD IT.");
     refresh();
-    char c = getch();
+    int c = teclado->getchar();
     switch (c){
       case 'Y':
       case 'y':
