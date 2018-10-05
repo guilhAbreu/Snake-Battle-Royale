@@ -27,6 +27,7 @@ bool keyboard_map(int c, std::vector<Audio::Sample* > asamples, Audio::Player *b
 Snake *create_snake(unsigned int length); // create snake with length bodys
 void record_msg(int record);
 void bg_music_msg(Teclado *teclado);
+void init_msg();
 
 int main (){
   Snake *snake = create_snake(50);
@@ -40,6 +41,7 @@ int main (){
   Tela *tela = new Tela(l, &f->food_pos, 20, 20, 20, 20);
   tela->init();
   
+  init_msg();
   // begin keyboard interface
   Teclado *teclado = new Teclado();
   teclado->init();
@@ -89,9 +91,8 @@ int main (){
       asamples[1]->set_position(0);
 
     // update model
-    if(f->update(deltaT) && deltaT!=0) {
+    if(f->update(deltaT)) {
       soundboard_player->play(asamples[5]);
-      std::this_thread::sleep_for (std::chrono::milliseconds(3000));
       game_over_msg();
       break;
     }
@@ -138,6 +139,14 @@ int main (){
   return 0;
 }
 
+void init_msg(){
+  attron(COLOR_PAIR(MSG_PAIR));
+  move((int)LINES/2, -10 + (int)COLS/2);
+  printw("WAITING FOR REMOTE CONNECTION");
+  refresh();
+  attroff(COLOR_PAIR(MSG_PAIR));
+}
+
 void bg_music_msg(Teclado *teclado){
   bool ok = false;
   attron(COLOR_PAIR(MSG_PAIR));
@@ -176,6 +185,8 @@ void game_over_msg(){
   attron(COLOR_PAIR(MSG_PAIR));
   move((int)LINES/2, -10 + (int)COLS/2);
   printw("GAME OVER");
+  move((int)LINES/2 +1, -10 + (int)COLS/2);
+  printw("PRESS ESC TO EXIT");
   attroff(COLOR_PAIR(MSG_PAIR));
   refresh();
   return;

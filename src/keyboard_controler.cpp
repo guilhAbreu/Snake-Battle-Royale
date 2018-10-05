@@ -47,8 +47,6 @@ void threadfun (int *keybuffer, int *control, int *socket_fd, int *connection_fd
       (*keybuffer) = 27;
       *control = false;
     }
-    else 
-      (*keybuffer) = 0;
   }
   return;
 }
