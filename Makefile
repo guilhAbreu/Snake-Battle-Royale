@@ -8,8 +8,13 @@ ASSETS_DIR = audio/assets
 STAT_DIR = statistics
 DIR = src
 TARGET = snake\ single\ player
+REMOTE_TARGET = remote-controler
+REMOTE_DIR = player
+REMOTE_SRCS = $(shell find $(REMOTE_DIR) -name '*.cpp')
+REMOTE_OBJS = $(REMOTE_SRCS:.c=.o)
 SRCS := $(shell find $(DIR) -name '*.cpp')
 OBJS = $(SRCS:.c=.o)
+ERROR_FILE = error_log
 
 .PHONY: depend clean
 
@@ -22,13 +27,21 @@ $(TARGET):$(OBJS)
 	$(CC) $(SRCS) $(CFLAGS) -c $< -o $@
 
 run:all sound
-	./$(TARGET) 2>/dev/null
+	./$(TARGET) 2>$(ERROR_DIR)
 
 sound:
 	unzip -n $(ASSETS_ZIP) -d $(ASSETS_DIR)/
 
+remote:$(REMOTE_TARGET)
+
+$(REMOTE_TARGET):$(REMOTE_OBJS)
+	$(CC) -o$(REMOTE_TARGET) $(REMOTE_OBJS) $(CFLAGS) $(NCURSES_FLAGS) $(PORTAUDIO_FLAGS)
+
+%.o:%.cpp
+	$(CC) $(REMOTE_SRCS) $(CFLAGS) -c $< -o $@
+
 clean:
-	$(RM) ./$(TARGET)
-	$(RM) $(DIR)/*.o
+	$(RM) ./$(TARGET) ./$(REMOTE_TARGET)
+	$(RM) $(DIR)/*.o $(REMOTE_DIR)/*.o
 	$(RM) $(ASSETS_DIR)/*.dat
 	$(RM) $(STAT_DIR)/*.est
