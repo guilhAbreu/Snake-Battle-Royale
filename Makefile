@@ -27,7 +27,7 @@ $(TARGET):$(OBJS)
 	$(CC) $(SRCS) $(CFLAGS) -c $< -o $@
 
 run:all sound
-	./$(TARGET) 2>$(ERROR_DIR)
+	./$(TARGET) 2>$(ERROR_FILE)
 
 sound:
 	unzip -n $(ASSETS_ZIP) -d $(ASSETS_DIR)/
@@ -45,3 +45,4 @@ clean:
 	$(RM) $(DIR)/*.o $(REMOTE_DIR)/*.o
 	$(RM) $(ASSETS_DIR)/*.dat
 	$(RM) $(STAT_DIR)/*.est
+	touch $(ERROR_FILE)
