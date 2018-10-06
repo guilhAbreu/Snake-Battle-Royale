@@ -26,11 +26,14 @@ $(TARGET):$(OBJS)
 %.o:%.cpp
 	$(CC) $(SRCS) $(CFLAGS) -c $< -o $@
 
-run:all sound
+server:all sound
 	./$(TARGET) 2>$(ERROR_FILE)
 
 sound:
 	unzip -n $(ASSETS_ZIP) -d $(ASSETS_DIR)/
+
+client: remote
+	./$(REMOTE_TARGET) $(IP) $(PORT)
 
 remote:$(REMOTE_TARGET)
 
