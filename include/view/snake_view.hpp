@@ -8,6 +8,19 @@ RA: 173691
 
 #include <ncurses.h>
 #include <thread>
+#include <vector>
+#include <string>
+#include <cstring>
+
+/*Socket*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "../model/snake_model.hpp"
 
@@ -25,14 +38,20 @@ class Tela {
     pos_2d *food_pos;
     int maxI, maxJ;
     float maxX, maxY;
-    bool blink;
+    int socket_fd, connection_fd, portno;
+    struct sockaddr_in myself, client;
+    socklen_t client_size = (socklen_t)sizeof(client);
 
   public:
     Tela(ListaDeSnakes *lds, pos_2d *food_pos, int maxI, int maxJ, float maxX, float maxY);
+    Tela(int maxI, int maxJ, float maxX, float maxY);
     ~Tela();
     void stop(); // stop screen
     void init(); // init screen
     void update(); // update screen
+    void update(std::vector<pos_2d> v);
+    void get_server(int portno, int socket, int connection,\
+                            struct sockaddr_in myself, struct sockaddr_in client);
 };
 
 #endif

@@ -25,13 +25,14 @@ class Teclado {
     struct sockaddr_in myself, client;
     socklen_t client_size = (socklen_t)sizeof(client);
 
-    bool init_server(int port);
   public:
     Teclado();
     ~Teclado();
     void stop(); // terminate thread that gets keys from keyboard 
     void init(); // init thread that gets keys from keyboard 
     int getchar(); // return key read 
+    void get_server(int portno, int socket, int connection,\
+                            struct sockaddr_in myself, struct sockaddr_in client);
 };
 
 #endif
