@@ -3,7 +3,7 @@
 #include <sstream>
 #include <string>
 
-#include "../include/view/audio_view.hpp"
+#include "../../include/view/audio_view.hpp"
 
 using namespace Audio;
 

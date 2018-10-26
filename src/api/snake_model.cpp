@@ -1,4 +1,4 @@
-#include "../include/model/snake_model.hpp"
+#include "../../include/model/snake_model.hpp"
 
 Corpo::Corpo(vel_2d velocidade, pos_2d p) {
   this->velocidade = velocidade;

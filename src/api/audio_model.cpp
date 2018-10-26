@@ -3,7 +3,7 @@
 #include <sstream>
 #include <string>
 
-#include "../include/model/audio_model.hpp"
+#include "../../include/model/audio_model.hpp"
 
 using namespace Audio;
 

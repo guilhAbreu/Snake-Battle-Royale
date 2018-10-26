@@ -4,18 +4,22 @@
 #include <vector>
 #include <ncurses.h>
 
-#include "../include/model/snake_model.hpp"
-#include "../include/view/snake_view.hpp"
-#include "../include/controler/snake_controler.hpp"
+#include "../../include/model/snake_model.hpp"
+#include "../../include/view/snake_view.hpp"
+#include "../../include/controler/snake_controler.hpp"
 
-#include "../include/model/audio_model.hpp"
-#include "../include/view/audio_view.hpp"
-#include "../include/controler/keyboard_controler.hpp"
+#include "../../include/model/audio_model.hpp"
+#include "../../include/view/audio_view.hpp"
+#include "../../include/controler/keyboard_controler.hpp"
 
+#include "../../serial/serializable.hpp"
+
+#include <string>
+#include <cstring>
 
 using namespace std::chrono;
 
-bool bg_enable;
+bool bg_enable = false;
 
 uint64_t get_now_ms();
 void init_asamples(std::vector<Audio::Sample*> *asamples); // init asamples
@@ -28,9 +32,21 @@ Snake *create_snake(unsigned int length); // create snake with length bodys
 void record_msg(int record);
 void bg_music_msg(Teclado *teclado);
 void init_msg();
+int init_server(int portno, int &socket_fd, int &connection_fd,\
+                struct sockaddr_in &myself, struct sockaddr_in &client);
+void error(char *msg);
 
-int main (){
-  Snake *snake = create_snake(50);
+int main (int argc, char *argv[]){
+  if (argc != 2)
+    error((char *)"PORT NUMBER must be passed\n");
+  
+  int portno = atoi(argv[1]), socket_fd, connection_fd;
+  struct sockaddr_in myself, client;
+  socklen_t client_size = (socklen_t)sizeof(client);
+  
+  init_server(portno, socket_fd, connection_fd, myself, client);
+  
+  Snake *snake = create_snake(4);
   
   // add snake into snake list and associate a physical model to it
   ListaDeSnakes *l = new ListaDeSnakes();
@@ -42,12 +58,15 @@ int main (){
   tela->init();
   
   init_msg();
+  
+  connection_fd = accept(socket_fd, (struct sockaddr*)&client, &client_size);
+
   // begin keyboard interface
   Teclado *teclado = new Teclado();
   teclado->init();
+  teclado->get_server(portno, socket_fd, connection_fd, myself, client);
 
-  // give the option of do  not load background music file
-  bg_music_msg(teclado);
+  bg_enable = false;
 
   // init asamples
   std::vector<Audio::Sample* > asamples(16);
@@ -77,6 +96,8 @@ int main (){
   int food_counter = -1;
   bool exit = false;
   int interation = 0;
+  
+  RelevantData *data = new RelevantData();
   if (bg_enable) background_player->play(asamples[1]);
   while (!exit) {
 
@@ -94,16 +115,26 @@ int main (){
     if(f->update(deltaT)) {
       soundboard_player->play(asamples[5]);
       game_over_msg();
+      //pos_2d end_signal = {-7,0};
+      //send(connection_fd, &end_signal,sizeof(pos_2d),0);
       break;
     }
 
+    char buffer[1000];
+    data->PutData(snake->get_corpos());
+    data->PutData(f->food_pos);
+    data->serialize(buffer);
+    send(connection_fd, buffer, 1000, 0);
+    data->clean();
+    
     // update screen
     tela->update();
 
     // read keys from keyboard
     int c = teclado->getchar();
-    exit = keyboard_map(c, asamples, button_player, soundboard_player, background_player, f, &impulse);
-    
+    if (c >0)
+      exit = keyboard_map(c, asamples, button_player, soundboard_player, background_player, f, &impulse);
+
     if (interation > 40)
       impulse = 0;
 
@@ -136,6 +167,7 @@ int main (){
   soundboard_player->stop();
   tela->stop();
   teclado->stop();
+  close(socket_fd);
   return 0;
 }
 
@@ -317,6 +349,30 @@ Snake *create_snake(unsigned int length){
   return snake;
 }
 
+int init_server(int portno, int &socket_fd, int &connection_fd,\
+                struct sockaddr_in &myself, struct sockaddr_in &client){
+  socklen_t client_size = (socklen_t)sizeof(client);
+  socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+  /*Create socket*/
+  socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+  if (socket_fd < 0) 
+    error((char*)"ERROR opening socket");
+  
+  bzero((char *) &myself, sizeof(myself));/*set all values into the struct to 0*/
+  
+  myself.sin_family = AF_INET;
+  myself.sin_addr.s_addr = INADDR_ANY; /*Store the IP Adress of the machine on which the server is running*/
+  myself.sin_port = htons(portno);/*Convert portno into network bytes order*/
+  
+  if (bind(socket_fd, (struct sockaddr*)&myself, sizeof(myself)) != 0) {
+    return -1;
+  }
+
+  listen(socket_fd, 2);
+  return 0;
+}
+
 void init_asamples(std::vector<Audio::Sample*> *asamples){
   for (int i = 0; i < asamples->size(); i++){
     (*asamples)[i] = new Audio::Sample();
@@ -340,4 +396,9 @@ void init_asamples(std::vector<Audio::Sample*> *asamples){
   (*asamples)[14]->load("audio/assets/brutality.dat");
   (*asamples)[15]->load("audio/assets/mario_star.dat");
   return;
+}
+
+void error(char *msg){
+    perror(msg);
+    exit(1);
 }
