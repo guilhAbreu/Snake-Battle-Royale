@@ -30,7 +30,8 @@ API_OBJS = $(API_SRCS:.c=.o)
 
 # Arquivos necessarios para executar os programas
 ASSETS_ZIP = audio/assets/assets.zip
-ERROR_FILE = error_log
+SERVER_ERROR_FILE = server_error_log
+CLIENT_ERROR_FILE = client_error_log
 
 .PHONY: depend clean
 
@@ -43,13 +44,13 @@ $(TARGET):$(MAIN_OBJ) $(API_OBJS) $(SERIAL_OBJS)
 	$(CC) $(MAIN_SRC) $(API_SRCS) $(SERIAL_SRCS) $(CFLAGS) -c $< -o $@
 
 server:$(TARGET) sound
-	./$(TARGET) $(PORT) 2>$(ERROR_FILE)
+	./$(TARGET) $(PORT) 2>$(SERVER_ERROR_FILE)
 
 sound:
 	unzip -n $(ASSETS_ZIP) -d $(ASSETS_DIR)/
 
 client: remote
-	./$(REMOTE_TARGET) $(IP) $(PORT)
+	./$(REMOTE_TARGET) $(IP) $(PORT) 2>$(CLIENT_ERROR_FILE)
 
 remote:$(REMOTE_TARGET)
 
@@ -63,5 +64,4 @@ clean:
 	$(RM) ./$(TARGET) ./$(REMOTE_TARGET)
 	$(RM) $(API_DIR)/*.o $(SERIAL_DIR)/*.o $(MAIN_DIR)/*.o $(REMOTE_DIR)/*.o
 	$(RM) $(ASSETS_DIR)/*.dat
-	$(RM) $(STAT_DIR)/*.est
-	>$(ERROR_FILE)
+	$(RM) $(SERVER_ERROR_FILE) $(CLIENT_ERROR_FILE)
