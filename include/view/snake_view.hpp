@@ -27,10 +27,14 @@ RA: 173691
 #define SNAKE_SHAPE 'O'
 #define FOOD_SHAPE 'o'
 
-#define SNAKE_PAIR 1
-#define FOOD_PAIR 2
-#define MSG_PAIR 3
-#define BG_PAIR 4
+#define SNAKE1_PAIR 1
+#define SNAKE2_PAIR 2
+#define SNAKE3_PAIR 3
+#define SNAKE4_PAIR 4
+
+#define FOOD_PAIR 5
+#define MSG_PAIR 6
+#define BG_PAIR 7
 
 class Tela {
   private:

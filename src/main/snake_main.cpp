@@ -115,16 +115,20 @@ int main (int argc, char *argv[]){
     if(f->update(deltaT)) {
       soundboard_player->play(asamples[5]);
       game_over_msg();
-      //pos_2d end_signal = {-7,0};
-      //send(connection_fd, &end_signal,sizeof(pos_2d),0);
+      char buffer[1000];
+      pos_2d end_signal = {-1,-1};
+
+      data->PutData(end_signal);
+      data->serialize(buffer);
+      send(connection_fd, buffer, data->get_data_size(), 0);
       break;
     }
 
     char buffer[1000];
-    data->PutData(snake->get_corpos());
+    data->PutData(snake->get_corpos(), SNAKE1_PAIR);
     data->PutData(f->food_pos);
     data->serialize(buffer);
-    send(connection_fd, buffer, 1000, 0);
+    send(connection_fd, buffer, data->get_data_size(), 0);
     data->clean();
     
     // update screen
@@ -158,8 +162,6 @@ int main (int argc, char *argv[]){
   else{
     record_msg(record);
   }
-
-  std::this_thread::sleep_for (std::chrono::milliseconds(5000));
 
   // terminate objects properly
   background_player->stop();

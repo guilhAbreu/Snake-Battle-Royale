@@ -41,7 +41,7 @@ int main (int argc, char *argv[]){
   teclado->init();
 
   RelevantData *data = new RelevantData();
-  char buffer[1000];
+  char buffer[2000000];
 
   bool rodando = true;
   std::thread screen_thread(threadscreen, buffer, &rodando, socket_fd);
@@ -53,7 +53,16 @@ int main (int argc, char *argv[]){
     std::vector<pos_2d> recv_data;
     data->unserialize(buffer);
     data->copyData(recv_data);
-    tela->update(recv_data);
+    if (recv_data[1].x == -1 && recv_data[1].y == -1){
+      rodando = false;
+      screen_thread.join();
+      close(socket_fd);
+      game_over_msg();
+      std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+      break;
+    }
+    else
+      tela->update(recv_data);
     data->clean();
 
     // read keys from keyboard
@@ -63,25 +72,26 @@ int main (int argc, char *argv[]){
 
     if (c == 27){
       exit = true;
+      rodando = false;
+      screen_thread.join();
+      close(socket_fd);
       exit_msg();
     }
   }
 
-  rodando = false;
-  screen_thread.join();
-
   // terminate objects properly
   tela->stop();
   teclado->stop();
-
-  std::this_thread::sleep_for (std::chrono::milliseconds(5000));
-  close(socket_fd);
   return 0;
 }
 
 void threadscreen(char *keybuffer, bool *control, int socket_fd){
+  int len_data = 1000;
+  int bytes_recv;
   while ((*control) == true) {
-    recv(socket_fd, keybuffer, 1000, 0);
+    bytes_recv = recv(socket_fd, keybuffer, len_data, 0);
+    if (len_data - bytes_recv < 100)
+      len_data += 100;
     std::this_thread::sleep_for (std::chrono::milliseconds(10));
   }
   return;

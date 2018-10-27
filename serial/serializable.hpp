@@ -12,12 +12,13 @@ class RelevantData {
 
   public:
     RelevantData();
-    void PutData(std::vector<Corpo*> *corpos);
+    void PutData(std::vector<Corpo*> *corpos, short int color);
     void PutData(pos_2d p);
     RelevantData(char *buffer_in);
     void serialize(char *buffer_out);
     void unserialize(char  *buffer_in);
     void copyData(std::vector<pos_2d> &dest);
+    int get_data_size();
     void clean();
 };
 

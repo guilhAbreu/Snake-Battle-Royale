@@ -26,7 +26,11 @@ void Tela::init() {
 
   /*init color mode on the screen*/
   start_color();
-  init_pair(SNAKE_PAIR, COLOR_RED, COLOR_WHITE);
+  init_pair(SNAKE1_PAIR, COLOR_RED, COLOR_WHITE);
+  init_pair(SNAKE2_PAIR, COLOR_BLUE, COLOR_WHITE);
+  init_pair(SNAKE3_PAIR, COLOR_MAGENTA, COLOR_WHITE);
+  init_pair(SNAKE4_PAIR, COLOR_BLACK, COLOR_WHITE);
+
   init_pair(FOOD_PAIR, COLOR_GREEN, COLOR_WHITE);
   init_pair(MSG_PAIR, COLOR_BLUE, COLOR_YELLOW);
   init_pair(BG_PAIR, COLOR_WHITE, COLOR_WHITE);
@@ -55,7 +59,7 @@ void Tela::update() {
     std::vector<Corpo *> *corpos = (*s)[k]->get_corpos();
 
     // Draw bodys on the screen
-    attron(COLOR_PAIR(SNAKE_PAIR));
+    attron(COLOR_PAIR(SNAKE1_PAIR));
     for (int z = 0; z < corpos->size(); z++)
     {
       pos_2d p = (*corpos)[z]->get_posicao();
@@ -63,7 +67,7 @@ void Tela::update() {
       j = (int)p.x * (this->maxI / this->maxX);
       mvaddch(i, j, SNAKE_SHAPE);
     }
-    attroff(COLOR_PAIR(SNAKE_PAIR));
+    attroff(COLOR_PAIR(SNAKE1_PAIR));
   }
 
   // Draw food on the screen
@@ -78,40 +82,38 @@ void Tela::update() {
 }
 
 void Tela::update(std::vector<pos_2d> data){
+  int num_snakes = data[0].x, num_foods = data[0].y;
+  
   //remove everything from the screen
   clear();
 
-  std::vector<pos_2d> corpos;
-  int i = 0;
-  while(data[i].y != -2){
-    corpos.push_back(data[i]);
-    i++;
-  }
-  
-  pos_2d food_pos = data[i+1];
+  int k = 1;
+  for(int i = 0; i < num_snakes; i++){
+    int size_snake = data[k].x;
+    int snake_pair = data[k].y;
+    k++;
 
-  {
-    int i, j;
-
-    // Draw bodys on the screen
-    attron(COLOR_PAIR(SNAKE_PAIR));
-    for (int z = 0; z < corpos.size(); z++)
-    {
-      pos_2d p = corpos[z];
-      i = (int)p.y * (this->maxI / this->maxX);
-      j = (int)p.x * (this->maxI / this->maxX);
+    // Draw snakes on the screen
+    attron(COLOR_PAIR(snake_pair));
+    for (int z = k; z < k + size_snake; z++){
+      int i = (int)data[z].y * (this->maxI / this->maxX);
+      int j = (int)data[z].x * (this->maxI / this->maxX);
       mvaddch(i, j, SNAKE_SHAPE);
     }
-    attroff(COLOR_PAIR(SNAKE_PAIR));
-  }
-
-  // Draw food on the screen
-  if (food_pos.x != -1){
-    attron(COLOR_PAIR(FOOD_PAIR));
-    mvaddch(food_pos.y, food_pos.x, FOOD_SHAPE);
-    attroff(COLOR_PAIR(FOOD_PAIR));
+    attroff(COLOR_PAIR(snake_pair));
+    k += size_snake;
   }
   
+  // Draw foods on the screen
+  attron(COLOR_PAIR(FOOD_PAIR));
+  for(int z = k; z < k + num_foods; z++){
+
+    int i = (int)data[z].y * (this->maxI / this->maxX);
+    int j = (int)data[z].x * (this->maxI / this->maxX);
+    mvaddch(i, j, FOOD_SHAPE);
+  }
+  attroff(COLOR_PAIR(FOOD_PAIR));
+
   // update scren
   refresh();
 }
