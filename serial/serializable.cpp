@@ -50,6 +50,15 @@ void RelevantData::PutData(pos_2d p){
   }
 }
 
+void RelevantData::PutData(int food_counter){
+  if (this->data.empty()){
+    pos_2d len = {2,(float)food_counter};
+    this->data.push_back(len);
+  }else{
+    this->data[0].y = (float)food_counter;
+  }
+}
+
 RelevantData::RelevantData(char *buffer_in) {
   this->unserialize(buffer_in);
 }
@@ -72,12 +81,12 @@ void RelevantData::serialize(char *buffer_out) {
   }
 }
 
-void RelevantData::unserialize(char *buffer_in) {
+int RelevantData::unserialize(char *buffer_in) {
   int bytes = sizeof(pos_2d);
   
   pos_2d p;
   std::memcpy(&p, &buffer_in[0], bytes);
-  int data_size = p.x;
+  int data_size = p.x, food_counter = p.y;
   
   for (int j = 1; j <= data_size; j++){
     pos_2d p;
@@ -85,6 +94,7 @@ void RelevantData::unserialize(char *buffer_in) {
     this->data.push_back(p);
   }
 
+  return (int)food_counter;
 }
 
 int RelevantData::get_data_size(){

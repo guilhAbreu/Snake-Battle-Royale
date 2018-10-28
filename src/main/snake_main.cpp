@@ -62,10 +62,11 @@ int main (int argc, char *argv[]){
   
   RelevantData *data = new RelevantData();
   while (!exit) {
-
+    int bite_signal = -1;
     // food_pos == (-1, don't care) means that there is no food at the arena 
     if (f->food_pos.x == -1){
       food_counter++;
+      bite_signal = food_counter;
       f->feed_snake();
     }
 
@@ -83,6 +84,7 @@ int main (int argc, char *argv[]){
     char buffer[1000];
     data->PutData(snake->get_corpos(), SNAKE1_PAIR);
     data->PutData(f->food_pos);
+    data->PutData(bite_signal);
     data->serialize(buffer);
     send(connection_fd, buffer, data->get_data_size(), 0);
     data->clean();

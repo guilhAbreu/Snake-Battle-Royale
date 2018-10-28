@@ -25,6 +25,8 @@ int init_client(char *ip, int portno, int &socket_fd);
 void init_asamples(std::vector<Audio::Sample*> *asamples); // init asamples
 bool keyboard_map(int c, std::vector<Audio::Sample* > asamples, Audio::Player *button_player, \
                   Audio::Player *soundboard_player, Audio::Player *background_player);
+void soundboard_interaction(int food_counter, std::vector<Audio::Sample*> asamples,\
+                  Audio::Player *soundboard_player); // define which soundboard to play
 
 void error(char *msg);
 void threadscreen(char *keybuffer, bool *control, int socket_fd);
@@ -79,7 +81,7 @@ int main (int argc, char *argv[]){
       asamples[1]->set_position(0);
 
     std::vector<pos_2d> recv_data;
-    data->unserialize(buffer);
+    int food_counter = data->unserialize(buffer);
     data->copyData(recv_data);
     if (recv_data[1].x == -1 && recv_data[1].y == -1){
       rodando = false;
@@ -93,6 +95,8 @@ int main (int argc, char *argv[]){
     else
       tela->update(recv_data);
     data->clean();
+
+    soundboard_interaction(food_counter, asamples, soundboard_player);
 
     // read keys from keyboard
     int c = teclado->getchar();
@@ -248,6 +252,30 @@ bool keyboard_map(int c, std::vector<Audio::Sample* > asamples, Audio::Player *b
   }
   return false;
 }
+
+void soundboard_interaction(int food_counter, std::vector<Audio::Sample*> asamples, Audio::Player *soundboard_player){
+  if (food_counter == 10){
+    soundboard_player->play(asamples[14]);
+  }
+  else if (food_counter == 20){
+    soundboard_player->play(asamples[12]);
+  }
+  else if (food_counter == 40){
+    soundboard_player->play(asamples[11]);
+  }
+  else if(food_counter == 60){
+    soundboard_player->play(asamples[2]);
+  }
+  else if (food_counter > 0){
+    soundboard_player->play(asamples[4]);
+    asamples[4]->set_position(0);
+  }
+  /*else if (food_counter == 1){
+    soundboard_player->play(asamples[8]);
+  }*/
+  return;
+}
+
 
 void init_asamples(std::vector<Audio::Sample*> *asamples){
   for (int i = 0; i < asamples->size(); i++){
