@@ -56,59 +56,51 @@ void Fisica::feed_snake(){
   return;
 }
 
-bool Fisica::update(float deltaT) {
+short int Fisica::update(int snake_ID) {
   // get snake list!
   std::vector<Snake*> *s = this->lista->get_snakes();
-  bool selfkill = false;
 
-  for (int j = 0; j < s->size(); j++){
-    std::vector<Corpo*> *c = (*s)[j]->get_corpos();
-    vel_2d vel = (*c)[0]->get_velocidade();
-    std::vector<pos_2d> last_pos(c->size());
-    pos_2d new_pos;
+  std::vector<Corpo*> *c = (*s)[snake_ID]->get_corpos();
+  vel_2d vel = (*c)[0]->get_velocidade();
+  std::vector<pos_2d> last_pos(c->size());
+  pos_2d new_pos;
 
-    // get last positions
-    for (int i = 0; i < c->size(); i++) {
-      last_pos[i]= (*c)[i]->get_posicao();
-    }
-    
-    // compute new position of the head
-    new_pos.x = last_pos[0].x + deltaT *vel.x;
-    new_pos.y = last_pos[0].y + deltaT *vel.y;
+  // get last positions
+  for (int i = 0; i < c->size(); i++) {
+    last_pos[i]= (*c)[i]->get_posicao();
+  }
+  
+  // compute new position of the head
+  new_pos.x = last_pos[0].x + vel.x;
+  new_pos.y = last_pos[0].y + vel.y;
 
-    // borders coditions
-    if ((new_pos.x < 0) || (new_pos.y < 0)){
-      selfkill = true;
-      break;
-    }
-    if ((new_pos.x >= COLS) || (new_pos.y >= LINES)){
-      selfkill = true;
-      break;
-    }
-
-    // update snake position
-    for (int i = 1; i < c->size(); i++) {
-      (*c)[i]->update(vel, last_pos[i-1]);
-    }
-    (*c)[0]->update(vel, new_pos);
-    
-    // verify if snake got hited by itself
-    if(this->verify_selfkill(c)){
-      selfkill = true;
-      break;
-    }
-    
-    // increase snake size or not
-    if (this->verify_snake_ate(c)){
-      this->food_pos.x = -1, this->food_pos.y =-1;
-      Corpo *new_corpo = new Corpo(vel, last_pos[c->size()-1]);
-      (*s)[j]->add_corpo(new_corpo);
-    }
+  // borders coditions
+  if ((new_pos.x < 0) || (new_pos.y < 0)){
+    return -2;
+  }
+  if ((new_pos.x >= COLS) || (new_pos.y >= LINES)){
+    return -2;
   }
 
+  // update snake position
+  for (int i = 1; i < c->size(); i++) {
+    (*c)[i]->update(vel, last_pos[i-1]);
+  }
+  (*c)[0]->update(vel, new_pos);
+  
+  // verify if snake got hited by itself
+  short int collison = this->verify_snake_collison(s, snake_ID);
+  if (collison != -3)
+    return collison;
 
+  // increase snake size or not
+  if (this->verify_snake_ate(c)){
+    Corpo *new_corpo = new Corpo(vel, last_pos[c->size()-1]);
+    (*s)[snake_ID]->add_corpo(new_corpo);
+    collison = -4;
+  }
 
-  return selfkill;
+  return collison;
 }
 
 bool Fisica::verify_snake_ate(std::vector<Corpo*> *c){
@@ -125,14 +117,32 @@ bool Fisica::verify_snake_ate(std::vector<Corpo*> *c){
   return ate;
 }
 
-bool Fisica::verify_selfkill(std::vector<Corpo*> *corpos){
-  for (int j = 1; j < corpos->size(); j++){
-    if ((int)(*corpos)[0]->get_posicao().x == (int)(*corpos)[j]->get_posicao().x \
-        && (int)(*corpos)[0]->get_posicao().y == (int)(*corpos)[j]->get_posicao().y){
-      return true;      
+short int Fisica::verify_snake_collison(std::vector<Snake*> *s, int snake_ID){
+  std::vector<Corpo*> *snake_target = (*s)[snake_ID]->get_corpos();
+  pos_2d head_pos = (*snake_target)[0]->get_posicao();
+  for (int i = 0; i < s->size(); i++){
+    if(i == snake_ID)
+      continue;
+
+    std::vector<Corpo*> *c = (*s)[i]->get_corpos();
+
+    for(int j= 0; j < c->size(); j++){
+      pos_2d p = (*c)[j]->get_posicao();
+      if (head_pos.x == p.x && head_pos.y == p.y){
+        s->erase(s->begin() + i);
+        if (i > snake_ID)
+          s->erase(s->begin() + snake_ID);
+        else
+          s->erase(s->begin() + snake_ID - 1);
+
+        if (j == 0)
+          return i;
+        else
+          return -1;
+      }
     }
   }
-  return false;
+  return -3;
 }
 
 void Fisica::change_dir(int direction, int i) {

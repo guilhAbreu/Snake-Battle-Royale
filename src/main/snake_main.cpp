@@ -17,82 +17,174 @@
 #include <string>
 #include <cstring>
 
+#define SNAKE_MAX 1
+
+typedef struct player_info{
+  int socket;
+  int port;
+  int snake_ID;
+  struct sockaddr_in myself;
+  Fisica *physic;
+  ListaDeSnakes *snake_list;
+  bool *thread_running;
+  int *connection_fd;
+}plyr_data;
+
 using namespace std::chrono;
 
 uint64_t get_now_ms();
-bool keyboard_map(int c, Fisica *f, int *impulse);
-Snake *create_snake(unsigned int length); // create snake with length bodys
-int init_server(int portno, int &socket_fd, int &connection_fd,\
-                struct sockaddr_in &myself, struct sockaddr_in &client);
+bool keyboard_map(int c, int snake_ID, Fisica *f, int *impulse);
+Snake *create_snake(unsigned int length, pos_2d p); // create snake with length bodys
+int init_server(int portno, int &socket_fd, struct sockaddr_in &myself);
 void error(char *msg);
+void player_management(plyr_data args);
+
+void t(int n){
+  return;
+}
 
 int main (int argc, char *argv[]){
   if (argc != 2)
     error((char *)"PORT NUMBER must be passed\n");
   
-  int portno = atoi(argv[1]), socket_fd, connection_fd;
+  int portno = atoi(argv[1]), socket_fd;
   struct sockaddr_in myself, client;
   socklen_t client_size = (socklen_t)sizeof(client);
   
-  init_server(portno, socket_fd, connection_fd, myself, client);
+  init_server(portno, socket_fd, myself);
   
-  Snake *snake = create_snake(4);
-  
-  // add snake into snake list and associate a physical model to it
-  ListaDeSnakes *l = new ListaDeSnakes();
-  l->add_snake(snake);
-  Fisica *f = new Fisica(l);
+  ListaDeSnakes *snake_list = new ListaDeSnakes();
+  pos_2d p = {0, 60};
+  for(int i = 0; i < SNAKE_MAX; i++){
+    Snake *snake = create_snake(4, p);
+    snake_list->add_snake(snake);
+    p.y-=10;
+    if (p.y < 0)
+      error((char *)"SNAKE_MAX MACRO is too large\n");
+  }
+  Fisica *physic = new Fisica(snake_list);
 
   // begin screen
-  Tela *tela = new Tela(l, &f->food_pos, 20, 20, 20, 20);
+  Tela *tela = new Tela(snake_list, &physic->food_pos, 20, 20, 20, 20);
   tela->init();
   
-  connection_fd = accept(socket_fd, (struct sockaddr*)&client, &client_size);
+  bool thread_running[SNAKE_MAX];
+  int connection_fd[SNAKE_MAX];
+
+  for (int i = 0; i < SNAKE_MAX; i++)
+    thread_running[i] = false;
+
+  std::vector<std::thread> connection_thread(SNAKE_MAX);
+
+  plyr_data args;
+
+  args.socket = socket_fd;
+  args.port = portno;
+  args.connection_fd = connection_fd;
+  args.myself = myself;
+  args.physic = physic;
+  args.snake_list = snake_list;
+  args.thread_running = thread_running; 
+
+  for (int i = 0; i < SNAKE_MAX; i++){
+    args.snake_ID = i;
+    std::thread new_thread(player_management, args);
+    connection_thread[i].swap(new_thread);
+  }
+
+  for (int i = 0; i < SNAKE_MAX; i++){
+    connection_thread[i].join();
+  }
+
+  int i = 0;
+  while(i < SNAKE_MAX){
+    if (send(connection_fd[i], "check", 6, 0) != -1)
+      i = 0;
+    else
+      i++;
+  }
+
+  tela->stop();
+  close(socket_fd);
+  return 0;
+}
+
+void player_management(plyr_data args){
+  int socket_fd = args.socket, port = args.port, *connection_fd = args.connection_fd;
+  struct sockaddr_in myself = args.myself;
+  int snake_ID = args.snake_ID;
+  Fisica *physic = args.physic;
+  ListaDeSnakes *snake_list = args.snake_list;
+  bool *thread_running = args.thread_running;
+
+  struct sockaddr_in client;
+  socklen_t client_size = (socklen_t)sizeof(client);
+  
+  connection_fd[snake_ID] = accept(socket_fd, (struct sockaddr*)&client, &client_size);
 
   // begin keyboard interface
   Teclado *teclado = new Teclado();
   teclado->init();
-  teclado->get_server(portno, socket_fd, connection_fd, myself, client);
+  teclado->get_server(port, socket_fd, connection_fd[snake_ID], myself, client);
   
   int impulse = 0; // speed up snake
-  int deltaT =1; // lock delta time in 1, in order to guarantee a discrete variation
   int food_counter = -1;
-  bool exit = false;
   int interation = 0;
   
+  std::vector<Snake *> *snake_vector = snake_list->get_snakes();
   RelevantData *data = new RelevantData();
-  while (!exit) {
+
+  thread_running[snake_ID] = true;
+
+  // Wait for all players
+  int i = 0;
+  while(i < SNAKE_MAX){
+    if (thread_running[i] == true)
+      i++;
+  }
+
+  bool init_signal = false;
+  send(connection_fd[snake_ID], &init_signal, sizeof(bool), 0);
+  physic->feed_snake();
+  while (thread_running[snake_ID]) {
     int bite_signal = -1;
-    // food_pos == (-1, don't care) means that there is no food at the arena 
-    if (f->food_pos.x == -1){
+    char buffer[2000000];
+    short int update_value = physic->update(snake_ID);
+
+    if (update_value == -4){
       food_counter++;
       bite_signal = food_counter;
-      f->feed_snake();
+      physic->feed_snake();
     }
-
+    
     // update model
-    if(f->update(deltaT)) {
-      char buffer[1000];
+    if (update_value >= -2){
       pos_2d end_signal = {-1,-1};
 
       data->PutData(end_signal);
       data->serialize(buffer);
-      send(connection_fd, buffer, data->get_data_size(), 0);
+      send(connection_fd[snake_ID], buffer, data->get_data_size(), 0);
+
+      if(update_value >= 0){
+        thread_running[update_value] = false;
+        send(connection_fd[update_value], buffer, data->get_data_size(), 0);
+      }
+
       break;
     }
 
-    char buffer[1000];
-    data->PutData(snake->get_corpos(), SNAKE1_PAIR);
-    data->PutData(f->food_pos);
+    for(int i = 0; i < SNAKE_MAX; i++)
+      data->PutData((*snake_vector)[i]->get_corpos(), SNAKE1_PAIR + i);
+    data->PutData(physic->food_pos);
     data->PutData(bite_signal);
     data->serialize(buffer);
-    send(connection_fd, buffer, data->get_data_size(), 0);
+    send(connection_fd[snake_ID], buffer, data->get_data_size(), 0);
     data->clean();
 
     // read keys from keyboard
     int c = teclado->getchar();
-    if (c >0)
-      exit = keyboard_map(c, f, &impulse);
+    if (c > 0)
+      thread_running[snake_ID] = keyboard_map(c, snake_ID, physic, &impulse);
 
     if (interation > 40)
       impulse = 0;
@@ -108,30 +200,27 @@ int main (int argc, char *argv[]){
     }
   }
 
-  // terminate objects properly
-  tela->stop();
   teclado->stop();
-  close(socket_fd);
-  return 0;
+  return;
 }
 
-bool keyboard_map(int c, Fisica *f, int *impulse){
+bool keyboard_map(int c, int snake_ID, Fisica *f, int *impulse){
   switch (c){
     case KEY_DOWN:
       // head goes down
-      f->change_dir(0,0);
+      f->change_dir(0,snake_ID);
       break;
     case KEY_LEFT:
       // head goes left
-      f->change_dir(1,0);
+      f->change_dir(1,snake_ID);
       break;
     case KEY_UP:
       // head goes up
-      f->change_dir(2,0);
+      f->change_dir(2,snake_ID);
       break;
     case KEY_RIGHT:
       // head goes right
-      f->change_dir(3,0);
+      f->change_dir(3,snake_ID);
       break;
     case ' ':
       // speed up snake
@@ -140,17 +229,16 @@ bool keyboard_map(int c, Fisica *f, int *impulse){
       break;
     case 27:
       // terminate game
-      return true;
+      return false;
   }
-  return false;
+  return true;
 }
 
 uint64_t get_now_ms() {
   return duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
 }
 
-Snake *create_snake(unsigned int length){
-  pos_2d p = {40,40};
+Snake *create_snake(unsigned int length, pos_2d p){
   vel_2d v = {(float)VEL,0};
 
   Snake *snake = new Snake();
@@ -163,9 +251,7 @@ Snake *create_snake(unsigned int length){
   return snake;
 }
 
-int init_server(int portno, int &socket_fd, int &connection_fd,\
-                struct sockaddr_in &myself, struct sockaddr_in &client){
-  socklen_t client_size = (socklen_t)sizeof(client);
+int init_server(int portno, int &socket_fd, struct sockaddr_in &myself){
   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
   /*Create socket*/
