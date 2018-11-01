@@ -42,14 +42,6 @@ int main (int argc, char *argv[]){
 
   init_client(argv[1], portno, socket_fd);
 
-  // begin screen
-  Tela *tela = new Tela(20, 20, 20, 20);
-  tela->init();
-
-  // begin keyboard interface
-  Teclado *teclado = new Teclado();
-  teclado->init();
-
   bg_enable = false;
 
   // init asamples
@@ -66,17 +58,28 @@ int main (int argc, char *argv[]){
   // ensure that button_player won't play at the beginning of the game
   asamples[3]->set_position(INT32_MAX);
   button_player->play(asamples[3]);
+  
+  // begin screen
+  Tela *tela = new Tela(20, 20, 20, 20);
+  tela->init();
+
+  // begin keyboard interface
+  Teclado *teclado = new Teclado();
+  teclado->init();
+
+  short int my_color = -1;
+  while(my_color <= 0 || my_color > 4)
+    recv(socket_fd, &my_color, sizeof(short int), 0);
+
+  send(socket_fd, &my_color, sizeof(short int), 0);
+
+  bool running = true;
+  char buffer[2000000];
+  std::thread screen_thread(threadscreen, buffer, &running, socket_fd);
+  std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
   RelevantData *data = new RelevantData();
-  char buffer[2000000];
-  
-  bool exit;
-  while(recv(socket_fd, &exit, sizeof(bool), 0) <= 0);
-
-  exit = false;
-  bool rodando = true;
-  std::thread screen_thread(threadscreen, buffer, &rodando, socket_fd);
-  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+  bool exit = false;
   while (!exit) {
     
     if (bg_enable && asamples[1]->finished())
@@ -86,7 +89,7 @@ int main (int argc, char *argv[]){
     int food_counter = data->unserialize(buffer);
     data->copyData(recv_data);
     if (recv_data[1].x == -1 && recv_data[1].y == -1){
-      rodando = false;
+      running = false;
       screen_thread.join();
       close(socket_fd);
       game_over_msg();
@@ -107,7 +110,7 @@ int main (int argc, char *argv[]){
 
       if (keyboard_map(c, asamples, button_player, soundboard_player, background_player)){
         exit = true;
-        rodando = false;
+        running = false;
         screen_thread.join();
         close(socket_fd);
         exit_msg();
