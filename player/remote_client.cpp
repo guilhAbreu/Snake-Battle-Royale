@@ -67,16 +67,16 @@ int main (int argc, char *argv[]){
   Teclado *teclado = new Teclado();
   teclado->init();
 
-  short int my_color = -1;
+  /*short int my_color = -1;
   while(my_color <= 0 || my_color > 4)
     recv(socket_fd, &my_color, sizeof(short int), 0);
 
-  send(socket_fd, &my_color, sizeof(short int), 0);
+  send(socket_fd, &my_color, sizeof(short int), 0);*/
 
   bool running = true;
   char buffer[2000000];
   std::thread screen_thread(threadscreen, buffer, &running, socket_fd);
-  std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+  std::this_thread::sleep_for(std::chrono::milliseconds(8000));
 
   RelevantData *data = new RelevantData();
   bool exit = false;

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <mutex>
 #include <vector>
 #include <ncurses.h>
 
@@ -18,6 +19,7 @@
 #include <cstring>
 
 int SNAKE_MAX;
+std::mutex player_key;
 
 typedef struct player_info{
   int socket;
@@ -80,13 +82,14 @@ int main (int argc, char *argv[]){
 
   plyr_data args;
 
+  physic->feed_snake();
   args.socket = socket_fd;
   args.port = portno;
   args.connection_fd = connection_fd;
   args.myself = myself;
   args.physic = physic;
   args.snake_list = snake_list;
-  args.thread_running = thread_running; 
+  args.thread_running = thread_running;
 
   for (int i = 0; i < SNAKE_MAX; i++){
     args.snake_ID = i;
@@ -142,15 +145,13 @@ void player_management(plyr_data args){
     if (thread_running[i] == true)
       i++;
   }
-  
-  physic->feed_snake();
 
-  short int ID = snake_ID + 1;
+  /*short int ID = snake_ID + 1;
   send(connection_fd[snake_ID], &ID, sizeof(short int), 0);
   
   ID = 0;
   while(ID != snake_ID+1)
-    recv(connection_fd[snake_ID], &ID, sizeof(short int), 0);
+    recv(connection_fd[snake_ID], &ID, sizeof(short int), 0);*/
   
   while (thread_running[snake_ID]) {
     int bite_signal = -1;
@@ -161,7 +162,9 @@ void player_management(plyr_data args){
     if (update_value == -4){
       food_counter++;
       bite_signal = food_counter;
+      player_key.lock();
       physic->feed_snake();
+      player_key.unlock();
     }
     
     // update model
@@ -179,11 +182,14 @@ void player_management(plyr_data args){
 
       break;
     }
-
+    
+    player_key.lock();
     for(int i = 0; i < SNAKE_MAX; i++)
       data->PutData((*snake_vector)[i]->get_corpos(), SNAKE1_PAIR + i);
     for(int i = 0; i < physic->food_vector.size(); i++)
       data->PutData(physic->food_vector[i]);
+    player_key.unlock();
+
     data->PutData(bite_signal);
     data->serialize(buffer);
     send(connection_fd[snake_ID], buffer, data->get_data_size(), 0);
@@ -191,8 +197,14 @@ void player_management(plyr_data args){
 
     // read keys from keyboard
     int c = teclado->getchar();
-    if (c > 0)
-      thread_running[snake_ID] = keyboard_map(c, snake_ID, physic, &impulse);
+    player_key.lock();
+    if (c > 0){
+      if (keyboard_map(c, snake_ID, physic, &impulse) == false){
+        thread_running[snake_ID] = false;
+        snake_vector->erase(snake_vector->begin() + snake_ID);
+      }
+    }
+    player_key.unlock();
 
     if (interation > 40)
       impulse = 0;
