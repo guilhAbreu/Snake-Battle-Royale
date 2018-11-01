@@ -2,8 +2,7 @@
 #include "../../include/view/snake_view.hpp"
 #include <stdlib.h>
 
-Tela::Tela(ListaDeSnakes *lds, pos_2d *food_pos, int maxI, int maxJ, float maxX, float maxY) {
-  this->food_pos = food_pos;
+Tela::Tela(ListaDeSnakes *lds, int maxI, int maxJ, float maxX, float maxY) {
   this->lista = lds;
   this->maxI = maxI;
   this->maxJ = maxJ;

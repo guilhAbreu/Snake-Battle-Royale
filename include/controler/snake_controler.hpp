@@ -26,7 +26,8 @@ class Fisica {
     void change_dir(int direction, int i); // change direction of the movement
     void add_corpo(Corpo *c); // add one single body to the snake
     short int update(int snake_ID); // update position according with delta time, movement is uniforme. it returns 1 if snake ate itself
-    pos_2d food_pos; // food position
+
+    std::vector<pos_2d> food_vector;
     void feed_snake(); // put one single food in a random position of the arena
 };
 

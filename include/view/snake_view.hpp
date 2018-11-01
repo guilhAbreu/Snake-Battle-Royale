@@ -47,7 +47,7 @@ class Tela {
     socklen_t client_size = (socklen_t)sizeof(client);
 
   public:
-    Tela(ListaDeSnakes *lds, pos_2d *food_pos, int maxI, int maxJ, float maxX, float maxY);
+    Tela(ListaDeSnakes *lds, int maxI, int maxJ, float maxX, float maxY);
     Tela(int maxI, int maxJ, float maxX, float maxY);
     ~Tela();
     void stop(); // stop screen

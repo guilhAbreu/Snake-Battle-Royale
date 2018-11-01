@@ -44,7 +44,7 @@ $(TARGET):$(MAIN_OBJ) $(API_OBJS) $(SERIAL_OBJS)
 	$(CC) $(MAIN_SRC) $(API_SRCS) $(SERIAL_SRCS) $(CFLAGS) -c $< -o $@
 
 server:$(TARGET) sound
-	./$(TARGET) $(PORT) 2>$(SERVER_ERROR_FILE)
+	./$(TARGET) $(PORT) $(PLAYERS) 2>$(SERVER_ERROR_FILE)
 
 sound:
 	unzip -n $(ASSETS_ZIP) -d $(ASSETS_DIR)/

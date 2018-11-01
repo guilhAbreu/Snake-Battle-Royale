@@ -11,9 +11,6 @@ RA: 173691
 
 Fisica::Fisica(ListaDeSnakes *lds) {
   this->lista = lds;
-
-  // indicate that there is no food yet
-  this->food_pos.x =-1.0; food_pos.y = -1.0;
 }
 
 void Fisica::feed_snake(){
@@ -21,38 +18,49 @@ void Fisica::feed_snake(){
   
   int y = rand()%LINES;
   int x = rand()%COLS;
-  int j = 0 ;
-  bool try_again =0;
+  int j;
+  bool try_again;
   std::vector<Snake*> *s = this->lista->get_snakes();
 
-  while(j < s->size()){
-    std::vector<Corpo*> *corpos = (*s)[j]->get_corpos();
-    j++;
-
-    std::vector<pos_2d> last_pos(corpos->size());
-
-    // get last positions
-    for (int i = 0; i < corpos->size(); i++) {
-      last_pos[i]= (*corpos)[i]->get_posicao();
+  do{
+    try_again = false;
+    
+    j = 0;
+    while(j < this->food_vector.size() && !try_again){
+      if ((int)this->food_vector[j].x == x && (int)this->food_vector[j].y == y){
+        try_again = true;
+      }
     }
 
-    // verify if already exist some body in the position x,y
-    for (int i = 0; i < corpos->size(); i++){
-      if ((int)last_pos[i].x == x && (int)last_pos[i].y == y){
-        try_again = 1;
-        break;
+    j = 0;
+    while(j < s->size() && !try_again){
+      std::vector<Corpo*> *corpos = (*s)[j]->get_corpos();
+      j++;
+
+      std::vector<pos_2d> last_pos(corpos->size());
+
+      // get last positions
+      for (int i = 0; i < corpos->size(); i++) {
+        last_pos[i]= (*corpos)[i]->get_posicao();
+      }
+
+      // verify if already exist some body in the position x,y
+      for (int i = 0; i < corpos->size(); i++){
+        if ((int)last_pos[i].x == x && (int)last_pos[i].y == y){
+          try_again = true;
+          break;
+        }
       }
     }
 
     if (try_again){
-      try_again = 0;
       x = rand()%COLS;
       y = rand()%LINES;
-      j = 0;
     }
-  }
+  }while(try_again);
 
-  this->food_pos.x = x, this->food_pos.y =y;
+  pos_2d next_food = {(float)x,(float)y};
+  this->food_vector.push_back(next_food);
   return;
 }
 
@@ -88,7 +96,7 @@ short int Fisica::update(int snake_ID) {
   }
   (*c)[0]->update(vel, new_pos);
   
-  // verify if snake got hited by itself
+  // verify if snake collided
   short int collison = this->verify_snake_collison(s, snake_ID);
   if (collison != -3)
     return collison;
@@ -105,15 +113,21 @@ short int Fisica::update(int snake_ID) {
 
 bool Fisica::verify_snake_ate(std::vector<Corpo*> *c){
   bool ate;
+  pos_2d food_pos;
 
-  if ((int)(*c)[0]->get_posicao().x == (int)this->food_pos.x \
-        && (int)(*c)[0]->get_posicao().y == (int)this->food_pos.y){
+  for (int i=0; i < this->food_vector.size() && !ate; i++){ 
+    food_pos = this->food_vector[i];
+    
+    if ((int)(*c)[0]->get_posicao().x == (int)food_pos.x \
+          && (int)(*c)[0]->get_posicao().y == (int)food_pos.y){
       ate = true;
+      this->food_vector.erase(this->food_vector.begin() + i);
+    }
+    else{
+      ate = false;
+    }
   }
-  else{
-    ate = false;
-  }
-
+  
   return ate;
 }
 

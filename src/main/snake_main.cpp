@@ -17,7 +17,7 @@
 #include <string>
 #include <cstring>
 
-#define SNAKE_MAX 1
+int SNAKE_MAX;
 
 typedef struct player_info{
   int socket;
@@ -44,9 +44,11 @@ void t(int n){
 }
 
 int main (int argc, char *argv[]){
-  if (argc != 2)
-    error((char *)"PORT NUMBER must be passed\n");
+  if (argc < 3)
+    error((char *)"PORT NUMBER and PLAYERS NUMBER must be passed\n");
   
+  SNAKE_MAX = atoi(argv[2]);
+
   int portno = atoi(argv[1]), socket_fd;
   struct sockaddr_in myself, client;
   socklen_t client_size = (socklen_t)sizeof(client);
@@ -54,18 +56,18 @@ int main (int argc, char *argv[]){
   init_server(portno, socket_fd, myself);
   
   ListaDeSnakes *snake_list = new ListaDeSnakes();
-  pos_2d p = {0, 60};
+  pos_2d p = {0, 40};
   for(int i = 0; i < SNAKE_MAX; i++){
     Snake *snake = create_snake(4, p);
     snake_list->add_snake(snake);
     p.y-=10;
     if (p.y < 0)
-      error((char *)"SNAKE_MAX MACRO is too large\n");
+      error((char *)"SNAKE_MAX is too large\n");
   }
   Fisica *physic = new Fisica(snake_list);
 
   // begin screen
-  Tela *tela = new Tela(snake_list, &physic->food_pos, 20, 20, 20, 20);
+  Tela *tela = new Tela(snake_list, 20, 20, 20, 20);
   tela->init();
   
   bool thread_running[SNAKE_MAX];
@@ -98,9 +100,7 @@ int main (int argc, char *argv[]){
 
   int i = 0;
   while(i < SNAKE_MAX){
-    if (send(connection_fd[i], "check", 6, 0) != -1)
-      i = 0;
-    else
+    if (recv(connection_fd[i], NULL, 1, 0) == 0)
       i++;
   }
 
@@ -128,7 +128,7 @@ void player_management(plyr_data args){
   teclado->get_server(port, socket_fd, connection_fd[snake_ID], myself, client);
   
   int impulse = 0; // speed up snake
-  int food_counter = -1;
+  int food_counter = 0;
   int interation = 0;
   
   std::vector<Snake *> *snake_vector = snake_list->get_snakes();
@@ -142,13 +142,20 @@ void player_management(plyr_data args){
     if (thread_running[i] == true)
       i++;
   }
-
-  bool init_signal = false;
-  send(connection_fd[snake_ID], &init_signal, sizeof(bool), 0);
+  
   physic->feed_snake();
+
+  short int ID = snake_ID + 1;
+  send(connection_fd[snake_ID], &ID, sizeof(short int), 0);
+  
+  ID = 0;
+  while(ID != snake_ID+1)
+    recv(connection_fd[snake_ID], &ID, sizeof(short int), 0);
+  
   while (thread_running[snake_ID]) {
     int bite_signal = -1;
     char buffer[2000000];
+    
     short int update_value = physic->update(snake_ID);
 
     if (update_value == -4){
@@ -175,7 +182,8 @@ void player_management(plyr_data args){
 
     for(int i = 0; i < SNAKE_MAX; i++)
       data->PutData((*snake_vector)[i]->get_corpos(), SNAKE1_PAIR + i);
-    data->PutData(physic->food_pos);
+    for(int i = 0; i < physic->food_vector.size(); i++)
+      data->PutData(physic->food_vector[i]);
     data->PutData(bite_signal);
     data->serialize(buffer);
     send(connection_fd[snake_ID], buffer, data->get_data_size(), 0);
