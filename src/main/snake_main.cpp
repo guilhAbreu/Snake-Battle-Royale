@@ -112,6 +112,7 @@ int main (int argc, char *argv[]){
       i++;
   }
 
+  std::this_thread::sleep_for (std::chrono::milliseconds(2000));
   tela->stop();
   close(socket_fd);
   return 0;
@@ -159,21 +160,17 @@ void player_management(plyr_data args){
     recv(connection_fd[snake_ID], &ID, sizeof(short int), 0);*/
   
   while (thread_running[snake_ID]) {
-    int bite_signal = -1;
     char buffer[2000000];
     
-    short int update_value = physic->update(snake_ID);
+    short int update_value = physic->update(snake_ID, thread_running);
 
-    if (update_value == -4){
+    if (update_value == -4){ // Snake ate
       food_counter++;
-      bite_signal = food_counter;
       player_key.lock();
       physic->feed_snake();
       player_key.unlock();
     }
-    
-    // update model
-    if (update_value >= -2){
+    if (update_value >= -2){ // Snake losed
       pos_2d end_signal = {-1,-1};
 
       data->PutData(end_signal);
@@ -184,6 +181,16 @@ void player_management(plyr_data args){
         thread_running[update_value] = false;
         send(connection_fd[update_value], buffer, data->get_data_size(), 0);
       }
+
+      thread_running[snake_ID] = false;
+      break;
+    }
+    if (update_value == -5){ // Snake won
+      pos_2d end_signal = {-10,10};
+
+      data->PutData(end_signal);
+      data->serialize(buffer);
+      send(connection_fd[snake_ID], buffer, data->get_data_size(), 0);
 
       thread_running[snake_ID] = false;
       break;
@@ -199,7 +206,7 @@ void player_management(plyr_data args){
     }
     player_key.unlock();
 
-    data->PutData(bite_signal);
+    data->PutData(food_counter);
     data->serialize(buffer);
     send(connection_fd[snake_ID], buffer, data->get_data_size(), 0);
     data->clean();

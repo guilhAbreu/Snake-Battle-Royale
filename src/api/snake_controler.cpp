@@ -65,9 +65,19 @@ void Fisica::feed_snake(){
   return;
 }
 
-short int Fisica::update(int snake_ID) {
+short int Fisica::update(int snake_ID, bool snakes_status[]) {
   // get snake list!
   std::vector<Snake*> *s = this->lista->get_snakes();
+
+  int snakes_in_game = 0;
+
+  for (int i = 0; i < s->size(); i++){
+    if (snakes_status[i] == true)
+      snakes_in_game++;
+  }
+
+  if (snakes_in_game == 1)
+    return -5;
 
   std::vector<Corpo*> *c = (*s)[snake_ID]->get_corpos();
   vel_2d vel = (*c)[0]->get_velocidade();
@@ -98,7 +108,7 @@ short int Fisica::update(int snake_ID) {
   (*c)[0]->update(vel, new_pos);
   
   // verify if snake collided
-  short int collison = this->verify_snake_collison(s, snake_ID);
+  short int collison = this->verify_snake_collison(s, snake_ID, snakes_status);
   if (collison != -3)
     return collison;
 
@@ -132,31 +142,30 @@ bool Fisica::verify_snake_ate(std::vector<Corpo*> *c){
   return ate;
 }
 
-short int Fisica::verify_snake_collison(std::vector<Snake*> *s, int snake_ID){
+short int Fisica::verify_snake_collison(std::vector<Snake*> *s, int snake_ID, bool snakes_status[]){
   std::vector<Corpo*> *snake_target = (*s)[snake_ID]->get_corpos();
   pos_2d head_pos = (*snake_target)[0]->get_posicao();
+  std::vector<int> snakes_in_game(0);
+
   for (int i = 0; i < s->size(); i++){
-    if(i == snake_ID)
-      continue;
+    if (snakes_status[i]  && i != snake_ID)
+      snakes_in_game.push_back(i);
+  }
 
-    std::vector<Corpo*> *c = (*s)[i]->get_corpos();
+  for (int i = 0; i < snakes_in_game.size(); i++){
+    std::vector<Corpo *> *c = (*s)[snakes_in_game[i]]->get_corpos();
+    for (int k = 0; k < c->size(); k++){
+      pos_2d corpo_pos = (*c)[k]->get_posicao();
 
-    for(int j= 0; j < c->size(); j++){
-      pos_2d p = (*c)[j]->get_posicao();
-      if (head_pos.x == p.x && head_pos.y == p.y){
-        s->erase(s->begin() + i);
-        if (i > snake_ID)
-          s->erase(s->begin() + snake_ID);
-        else
-          s->erase(s->begin() + snake_ID - 1);
-
-        if (j == 0)
-          return i;
+      if (head_pos.x == corpo_pos.x && head_pos.y == corpo_pos.y){
+        if (k == 0)
+          return snakes_in_game[i];
         else
           return -1;
       }
     }
   }
+
   return -3;
 }
 

@@ -20,12 +20,13 @@ bool bg_enable;
 void bg_music_msg(Teclado *teclado);
 void game_over_msg(); // print game over message
 void exit_msg(); // print exit message
+void winner_msg();
 
 int init_client(char *ip, int portno, int &socket_fd);
 void init_asamples(std::vector<Audio::Sample*> *asamples); // init asamples
 bool keyboard_map(int c, std::vector<Audio::Sample* > asamples, Audio::Player *button_player, \
                   Audio::Player *soundboard_player, Audio::Player *background_player);
-void soundboard_interaction(int food_counter, std::vector<Audio::Sample*> asamples,\
+void soundboard_interaction(int food_counter, int bite_sognal, std::vector<Audio::Sample*> asamples,\
                   Audio::Player *soundboard_player); // define which soundboard to play
 
 void error(char *msg);
@@ -80,14 +81,16 @@ int main (int argc, char *argv[]){
 
   RelevantData *data = new RelevantData();
   bool exit = false;
+  int bite_signal = 0;
   while (!exit) {
-    
+
     if (bg_enable && asamples[1]->finished())
       asamples[1]->set_position(0);
 
     std::vector<pos_2d> recv_data;
     int food_counter = data->unserialize(buffer);
     data->copyData(recv_data);
+    
     if (recv_data[1].x == -1 && recv_data[1].y == -1){
       running = false;
       screen_thread.join();
@@ -96,12 +99,22 @@ int main (int argc, char *argv[]){
       soundboard_player->play(asamples[5]);
       std::this_thread::sleep_for(std::chrono::milliseconds(3000));
       break;
-    }
-    else
+    }else if (recv_data[1].x == -10 && recv_data[1].y == 10){
+      running = false;
+      screen_thread.join();
+      close(socket_fd);
+      winner_msg();
+      soundboard_player->play(asamples[2]);
+      std::this_thread::sleep_for(std::chrono::milliseconds(6000));
+      break;
+    }else
       tela->update(recv_data);
+    
     data->clean();
 
-    soundboard_interaction(food_counter, asamples, soundboard_player);
+    bite_signal = food_counter -bite_signal;
+    soundboard_interaction(food_counter, bite_signal, asamples, soundboard_player);
+    bite_signal = food_counter;
 
     // read keys from keyboard
     int c = teclado->getchar();
@@ -201,6 +214,16 @@ void game_over_msg(){
   return;
 }
 
+void winner_msg(){
+  clear();
+  attron(COLOR_PAIR(MSG_PAIR));
+  move((int)LINES/2, -10 + (int)COLS/2);
+  printw("YOU WON !!!");
+  attroff(COLOR_PAIR(MSG_PAIR));
+  refresh();
+  return;
+}
+
 void exit_msg(){
   clear();
   attron(COLOR_PAIR(MSG_PAIR));
@@ -258,7 +281,7 @@ bool keyboard_map(int c, std::vector<Audio::Sample* > asamples, Audio::Player *b
   return false;
 }
 
-void soundboard_interaction(int food_counter, std::vector<Audio::Sample*> asamples, Audio::Player *soundboard_player){
+void soundboard_interaction(int food_counter, int bite_signal, std::vector<Audio::Sample*> asamples, Audio::Player *soundboard_player){
   if (food_counter == 10){
     soundboard_player->play(asamples[14]);
   }
@@ -271,11 +294,11 @@ void soundboard_interaction(int food_counter, std::vector<Audio::Sample*> asampl
   else if(food_counter == 60){
     soundboard_player->play(asamples[2]);
   }
-  else if (food_counter > 0){
+  else if (bite_signal){
     soundboard_player->play(asamples[4]);
     asamples[4]->set_position(0);
   }
-  /*else if (food_counter == 1){
+  /*else if (food_counter == 0){
     soundboard_player->play(asamples[8]);
   }*/
   return;
@@ -296,13 +319,13 @@ void init_asamples(std::vector<Audio::Sample*> *asamples){
   (*asamples)[5]->load("audio/assets/naovaidar.dat");
   (*asamples)[6]->load("audio/assets/get_over_here.dat");
   //(*asamples)[7]->load("audio/assets/come_here.dat");
-  //(*asamples)[8]->load("audio/assets/mortal_kombat_theme.dat");
+  (*asamples)[8]->load("audio/assets/mortal_kombat_theme.dat");
   //(*asamples)[9]->load("audio/assets/finish_him.dat");
   //(*asamples)[10]->load("audio/assets/finish_her.dat");
   (*asamples)[11]->load("audio/assets/fatality.dat");
   (*asamples)[12]->load("audio/assets/animality.dat");
   //(*asamples)[13]->load("audio/assets/soul_suffer.dat");
   (*asamples)[14]->load("audio/assets/brutality.dat");
-  (*asamples)[15]->load("audio/assets/mario_star.dat");
+  //(*asamples)[15]->load("audio/assets/mario_star.dat");
   return;
 }
