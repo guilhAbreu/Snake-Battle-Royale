@@ -18,6 +18,8 @@
 #include <string>
 #include <cstring>
 
+#define FOOD_AMOUNT_AT_BEGIN 8
+
 int SNAKE_MAX;
 std::mutex player_key;
 
@@ -82,7 +84,10 @@ int main (int argc, char *argv[]){
 
   plyr_data args;
 
-  physic->feed_snake();
+  for (int i = 0; i < FOOD_AMOUNT_AT_BEGIN; i++){
+    physic->feed_snake();
+  }
+    
   args.socket = socket_fd;
   args.port = portno;
   args.connection_fd = connection_fd;
@@ -180,14 +185,18 @@ void player_management(plyr_data args){
         send(connection_fd[update_value], buffer, data->get_data_size(), 0);
       }
 
+      thread_running[snake_ID] = false;
       break;
     }
     
     player_key.lock();
-    for(int i = 0; i < SNAKE_MAX; i++)
-      data->PutData((*snake_vector)[i]->get_corpos(), SNAKE1_PAIR + i);
-    for(int i = 0; i < physic->food_vector.size(); i++)
+    for(int i = 0; i < SNAKE_MAX; i++){
+      if (thread_running[i])
+        data->PutData((*snake_vector)[i]->get_corpos(), SNAKE1_PAIR + i);
+    }
+    for(int i = 0; i < physic->food_vector.size(); i++){
       data->PutData(physic->food_vector[i]);
+    }
     player_key.unlock();
 
     data->PutData(bite_signal);
@@ -197,14 +206,11 @@ void player_management(plyr_data args){
 
     // read keys from keyboard
     int c = teclado->getchar();
-    player_key.lock();
     if (c > 0){
       if (keyboard_map(c, snake_ID, physic, &impulse) == false){
         thread_running[snake_ID] = false;
-        snake_vector->erase(snake_vector->begin() + snake_ID);
       }
     }
-    player_key.unlock();
 
     if (interation > 40)
       impulse = 0;

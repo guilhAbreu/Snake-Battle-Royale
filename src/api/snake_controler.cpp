@@ -30,6 +30,7 @@ void Fisica::feed_snake(){
       if ((int)this->food_vector[j].x == x && (int)this->food_vector[j].y == y){
         try_again = true;
       }
+      j++;
     }
 
     j = 0;
