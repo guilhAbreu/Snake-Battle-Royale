@@ -12,7 +12,7 @@ In order to be able to compile and run the game, please, install the follow pack
 
 In order to run the game, in root folder type on the line command
 
-<p style="text-align: center;">
+<p align="center">
   <bold>make server PORT=PORTNUMBER PLAYERS=N</bold>
 </p>
 
