@@ -79,7 +79,8 @@ int main (int argc, char *argv[]){
   my_snake_color(my_color);
   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
   send(socket_fd, &my_color, sizeof(short int), 0);
-
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  
   bool running = true;
   char buffer[2000000];
   

@@ -109,7 +109,7 @@ int main (int argc, char *argv[]){
 
   int snakes_in_game;
   do{
-    //tela->update();
+    tela->update();
     snakes_in_game = 0;
     for (int i = 0; i < SNAKE_MAX; i++){
       if (thread_running[i])
