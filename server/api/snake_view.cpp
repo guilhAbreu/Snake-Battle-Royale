@@ -2,8 +2,9 @@
 #include "../../include/view/snake_view.hpp"
 #include <stdlib.h>
 
-Tela::Tela(ListaDeSnakes *lds, int maxI, int maxJ, float maxX, float maxY) {
+Tela::Tela(ListaDeSnakes *lds, std::vector<pos_2d> *food_vector, int maxI, int maxJ, float maxX, float maxY) {
   this->lista = lds;
+  this->food_pos = food_vector;
   this->maxI = maxI;
   this->maxJ = maxJ;
   this->maxX = maxX;
@@ -35,6 +36,7 @@ void Tela::init() {
   init_pair(BG_PAIR, COLOR_WHITE, COLOR_WHITE);
 
   if (bkgd(COLOR_PAIR( BG_PAIR)) == !OK) exit(EXIT_FAILURE);
+  refresh();
 }
 
 void Tela::get_server(int portno, int socket, int connection_fd,\
@@ -51,31 +53,32 @@ void Tela::update() {
 
   //remove everything from the screen
   clear();
-
-  
+  int i, j;
   for (int k =0; k < s->size(); k++){
-    int i, j;
+    
     std::vector<Corpo *> *corpos = (*s)[k]->get_corpos();
 
     // Draw bodys on the screen
-    attron(COLOR_PAIR(SNAKE1_PAIR));
+    attron(COLOR_PAIR(SNAKE1_PAIR + k));
     for (int z = 0; z < corpos->size(); z++)
     {
       pos_2d p = (*corpos)[z]->get_posicao();
       i = (int)p.y * (this->maxI / this->maxX);
       j = (int)p.x * (this->maxI / this->maxX);
-      mvaddch(i, j, SNAKE_SHAPE);
+      if (mvaddch(i, j, SNAKE_SHAPE) == ERR) return;
     }
-    attroff(COLOR_PAIR(SNAKE1_PAIR));
+    attroff(COLOR_PAIR(SNAKE1_PAIR + k));
   }
 
-  // Draw food on the screen
-  if (this->food_pos->x != -1){
-    attron(COLOR_PAIR(FOOD_PAIR));
-    mvaddch(this->food_pos->y, this->food_pos->x, FOOD_SHAPE);
-    attroff(COLOR_PAIR(FOOD_PAIR));
+  // Draw foods on the screen
+  attron(COLOR_PAIR(FOOD_PAIR));
+  for (int z = 0; z < this->food_pos->size(); z++){
+    i = (int)(*this->food_pos)[z].y * (this->maxI / this->maxX);
+    j = (int)(*this->food_pos)[z].x * (this->maxI / this->maxX);
+    if (mvaddch(i, j, FOOD_SHAPE) == ERR) return;
   }
-  
+  attroff(COLOR_PAIR(FOOD_PAIR));
+
   // update scren
   refresh();
 }

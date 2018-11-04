@@ -71,7 +71,7 @@ int main (int argc, char *argv[]){
   Fisica *physic = new Fisica(snake_list);
 
   // begin screen
-  Tela *tela = new Tela(snake_list, 20, 20, 20, 20);
+  Tela *tela = new Tela(snake_list, &physic->food_vector, 20, 20, 20, 20);
   tela->init();
   
   bool thread_running[SNAKE_MAX];
@@ -101,6 +101,24 @@ int main (int argc, char *argv[]){
     std::thread new_thread(player_management, args);
     connection_thread[i].swap(new_thread);
   }
+
+  // Wait for all players
+  int j = 0;
+  while(j < SNAKE_MAX){
+    if (thread_running[j] == true)
+      j++;
+  }
+
+  int snakes_in_game;
+  do{
+    tela->update();
+    snakes_in_game = 0;
+    for (int i = 0; i < SNAKE_MAX; i++){
+      if (thread_running[i])
+        snakes_in_game++;
+    }
+    std::this_thread::sleep_for (std::chrono::milliseconds(100));
+  }while(snakes_in_game > 0);
 
   for (int i = 0; i < SNAKE_MAX; i++){
     connection_thread[i].join();

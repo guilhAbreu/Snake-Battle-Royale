@@ -39,7 +39,7 @@ RA: 173691
 class Tela {
   private:
     ListaDeSnakes *lista;
-    pos_2d *food_pos;
+    std::vector<pos_2d> *food_pos;
     int maxI, maxJ;
     float maxX, maxY;
     int socket_fd, connection_fd, portno;
@@ -47,7 +47,7 @@ class Tela {
     socklen_t client_size = (socklen_t)sizeof(client);
 
   public:
-    Tela(ListaDeSnakes *lds, int maxI, int maxJ, float maxX, float maxY);
+    Tela(ListaDeSnakes *lds, std::vector<pos_2d> *food_pos, int maxI, int maxJ, float maxX, float maxY);
     Tela(int maxI, int maxJ, float maxX, float maxY);
     ~Tela();
     void stop(); // stop screen
