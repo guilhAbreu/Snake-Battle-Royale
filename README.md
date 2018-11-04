@@ -18,7 +18,9 @@ In order to run the game, in root folder type on the line command
 
 to run the server. You have to choose a avaiable __PORTNUMBER__ and the number of players __N__. After that, ou just have to run the client program in another terminal or another machine typing 
 
-**make client IP=IP_TARGET PORT=PORTNUMBER**
+<p align="center">
+  <b>make client IP=IP_TARGET PORT=PORTNUMBER</b>
+</p>
 
 where __IP_TARGET__ is the IP of the machine of the server. Ensure that all dependencies are installed. Please, before running the game, __maximize your terminal console__. The whole game is played at the terminal, so the performance depends of your terminal configurations too.
 
