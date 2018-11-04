@@ -18,9 +18,9 @@ using namespace client;
 bool bg_enable;
 
 void bg_music_msg(Teclado *teclado);
-void game_over_msg(); // print game over message
+void print_msg(int line, int collum, char *msg, bool clr);
 void exit_msg(); // print exit message
-void winner_msg();
+void my_snake_color(short int color); // show snake color
 
 int init_client(char *ip, int portno, int &socket_fd);
 void init_asamples(std::vector<Audio::Sample*> *asamples); // init asamples
@@ -68,16 +68,23 @@ int main (int argc, char *argv[]){
   Teclado *teclado = new Teclado();
   teclado->init();
 
-  /*short int my_color = -1;
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  print_msg((int)LINES/2, -10 + (int)COLS/2, (char *)"WAITING FOR OTHERS...", true);
+
+  short int my_color = -1;
   while(my_color <= 0 || my_color > 4)
     recv(socket_fd, &my_color, sizeof(short int), 0);
 
-  send(socket_fd, &my_color, sizeof(short int), 0);*/
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  my_snake_color(my_color);
+  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+  send(socket_fd, &my_color, sizeof(short int), 0);
 
   bool running = true;
   char buffer[2000000];
+  
   std::thread screen_thread(threadscreen, buffer, &running, socket_fd);
-  std::this_thread::sleep_for(std::chrono::milliseconds(8000));
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
   RelevantData *data = new RelevantData();
   bool exit = false;
@@ -95,7 +102,8 @@ int main (int argc, char *argv[]){
       running = false;
       screen_thread.join();
       close(socket_fd);
-      game_over_msg();
+      print_msg((int)LINES/2, -10 + (int)COLS/2, (char *)"GAME OVER", true);
+      print_msg((int)LINES/2+1, -10 + (int)COLS/2, (char *)"YOU LOSE !!!", false);
       soundboard_player->play(asamples[5]);
       std::this_thread::sleep_for(std::chrono::milliseconds(3000));
       break;
@@ -103,7 +111,7 @@ int main (int argc, char *argv[]){
       running = false;
       screen_thread.join();
       close(socket_fd);
-      winner_msg();
+      print_msg((int)LINES/2, -10 + (int)COLS/2, (char *)"YOU WON !!!", true);
       soundboard_player->play(asamples[2]);
       std::this_thread::sleep_for(std::chrono::milliseconds(6000));
       break;
@@ -204,21 +212,23 @@ void bg_music_msg(Teclado *teclado){
   return;
 }
 
-void game_over_msg(){
+void my_snake_color(short int color){
   clear();
-  attron(COLOR_PAIR(MSG_PAIR));
+  attron(COLOR_PAIR(color));
   move((int)LINES/2, -10 + (int)COLS/2);
-  printw("GAME OVER");
-  attroff(COLOR_PAIR(MSG_PAIR));
+  printw("YOUR SNAKE:");
+  move((int)LINES/2+2, -10 + (int)COLS/2);
+  printw("OOOOOOOO");
+  attroff(COLOR_PAIR(color));
   refresh();
   return;
 }
 
-void winner_msg(){
-  clear();
+void print_msg(int line, int collum, char *msg, bool clr){
+  if (clr) clear();
   attron(COLOR_PAIR(MSG_PAIR));
-  move((int)LINES/2, -10 + (int)COLS/2);
-  printw("YOU WON !!!");
+  move(line, collum);
+  printw(msg);
   attroff(COLOR_PAIR(MSG_PAIR));
   refresh();
   return;
