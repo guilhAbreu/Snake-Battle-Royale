@@ -18,6 +18,11 @@ Tela::Tela(int maxI, int maxJ, float maxX, float maxY) {
   this->maxY = maxY;
 }
 
+void Tela::catch_param(ListaDeSnakes *lds, std::vector<pos_2d> *food_vector){
+  this->lista = lds;
+  this->food_pos = food_vector;
+}
+
 void Tela::init() {
   initscr();			       /* Start curses mode 		*/
 	raw();				         /* Line buffering disabled	*/

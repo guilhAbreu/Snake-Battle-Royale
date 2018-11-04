@@ -50,6 +50,7 @@ class Tela {
     Tela(ListaDeSnakes *lds, std::vector<pos_2d> *food_pos, int maxI, int maxJ, float maxX, float maxY);
     Tela(int maxI, int maxJ, float maxX, float maxY);
     ~Tela();
+    void catch_param(ListaDeSnakes *lds, std::vector<pos_2d> *food_pos);
     void stop(); // stop screen
     void init(); // init screen
     void update(); // update screen

@@ -59,21 +59,23 @@ int main (int argc, char *argv[]){
   
   init_server(portno, socket_fd, myself);
   
+  // begin screen
+  Tela *tela = new Tela(20, 20, 20, 20);
+  tela->init();
+
   ListaDeSnakes *snake_list = new ListaDeSnakes();
-  pos_2d p = {0, 40};
+  pos_2d p = {0, (float)LINES - 1};
   for(int i = 0; i < SNAKE_MAX; i++){
     Snake *snake = create_snake(4, p);
     snake_list->add_snake(snake);
-    p.y-=10;
+    p.y-=5;
     if (p.y < 0)
       error((char *)"SNAKE_MAX is too large\n");
   }
   Fisica *physic = new Fisica(snake_list);
-
-  // begin screen
-  Tela *tela = new Tela(snake_list, &physic->food_vector, 20, 20, 20, 20);
-  tela->init();
   
+  tela->catch_param(snake_list, &physic->food_vector);
+
   bool thread_running[SNAKE_MAX];
   int connection_fd[SNAKE_MAX];
 
