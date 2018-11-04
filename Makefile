@@ -7,10 +7,10 @@ PORTAUDIO_FLAGS = -lportaudio -ljack -lrt -lasound -lm
 # Diretorios
 ASSETS_DIR = audio/assets
 STAT_DIR = statistics
-MAIN_DIR = src/main
-API_DIR = src/api
+MAIN_DIR = server/main
+API_DIR = server/api
 SERIAL_DIR = serial
-REMOTE_DIR = player
+REMOTE_DIR = client
 
 # Programas a serem gerados
 TARGET = snake\ single\ player
