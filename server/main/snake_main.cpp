@@ -43,10 +43,6 @@ int init_server(int portno, int &socket_fd, struct sockaddr_in &myself);
 void error(char *msg);
 void player_management(plyr_data args);
 
-void t(int n){
-  return;
-}
-
 int main (int argc, char *argv[]){
   if (argc < 3)
     error((char *)"PORT NUMBER and PLAYERS NUMBER must be passed\n");
@@ -113,7 +109,7 @@ int main (int argc, char *argv[]){
 
   int snakes_in_game;
   do{
-    tela->update();
+    //tela->update();
     snakes_in_game = 0;
     for (int i = 0; i < SNAKE_MAX; i++){
       if (thread_running[i])
