@@ -13,7 +13,7 @@ In order to be able to compile and run the game, please, install the follow pack
 In order to run the game, in root folder type on the line command
 
 <p align="center">
-  <bold>make server PORT=PORTNUMBER PLAYERS=N</bold>
+  <b>make server PORT=PORTNUMBER PLAYERS=N</b>
 </p>
 
 to run the server. You have to choose a avaiable __PORTNUMBER__ and the number of players __N__. After that, ou just have to run the client program in another terminal or another machine typing 
