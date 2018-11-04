@@ -12,11 +12,13 @@
 
     In order to run the game, in root folder type on the line command
 
-<center> **make server PORT=PORTNUMBER PLAYERS=N** </center>
+<html><p><center><bold>make server PORT=PORTNUMBER PLAYERS=N</bold></center></p></html>
 
 to run the server. You have to choose a avaiable __PORTNUMBER__ and the number of players __N__. After that, ou just have to run the client program in another terminal or another machine typing 
 
-                                                         **make client IP=IP_TARGET PORT=PORTNUMBER**
+<html>
+
+<html><p><center><bold>make client IP=IP_TARGET PORT=PORTNUMBER</bold></center></p></html>
 
 where __IP_TARGET__ is the IP of the machine of the server. Ensure that all dependencies are installed. Please, before running the game, __maximize your terminal console__. The whole game is played at the terminal, so the performance depends of your terminal configurations too.
 
@@ -41,29 +43,3 @@ where __IP_TARGET__ is the IP of the machine of the server. Ensure that all depe
 ## Cleaning Game Space
 
     In order to remove files created during the game and reset statistics, in root folder type on the line command **make clean**.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
