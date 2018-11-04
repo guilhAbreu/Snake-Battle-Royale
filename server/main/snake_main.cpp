@@ -60,7 +60,7 @@ int main (int argc, char *argv[]){
   tela->init();
 
   ListaDeSnakes *snake_list = new ListaDeSnakes();
-  pos_2d p = {0, (float)LINES - 1};
+  pos_2d p = {4, (float)LINES - 1};
   for(int i = 0; i < SNAKE_MAX; i++){
     Snake *snake = create_snake(4, p);
     snake_list->add_snake(snake);

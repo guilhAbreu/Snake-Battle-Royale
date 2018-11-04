@@ -79,15 +79,28 @@ int main (int argc, char *argv[]){
   my_snake_color(my_color);
   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
   send(socket_fd, &my_color, sizeof(short int), 0);
-  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
   bool running = true;
   char buffer[2000000];
-  
+  RelevantData *data = new RelevantData();
+
   std::thread screen_thread(threadscreen, buffer, &running, socket_fd);
   std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-  RelevantData *data = new RelevantData();
+  {
+    pos_2d p = {10,-10};
+    data->PutData(p);
+    data->serialize(buffer);
+    std::vector<pos_2d> recv_data;
+
+    do{
+      recv_data.clear();
+      data->unserialize(buffer);
+      data->copyData(recv_data);
+    }while(recv_data[1].x == 10 && recv_data[1].y == -10);
+  }
+
   bool exit = false;
   int bite_signal = 0;
   while (!exit) {
