@@ -173,10 +173,8 @@ void player_management(plyr_data args){
   short int ID = snake_ID + 1;
   send(connection_fd[snake_ID], &ID, sizeof(short int), 0);
   
-  ID = 0;
-  while(ID != snake_ID+1)
-    recv(connection_fd[snake_ID], &ID, sizeof(short int), 0);
-  
+  std::this_thread::sleep_for (std::chrono::milliseconds(3000));
+
   while (thread_running[snake_ID]) {
     char buffer[2000000];
     
