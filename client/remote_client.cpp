@@ -164,7 +164,7 @@ int main (int argc, char *argv[]){
 }
 
 void threadscreen(char *keybuffer, bool *control, int socket_fd){
-  int len_data = 1000;
+  int len_data = 10000;
   int bytes_recv;
   while ((*control) == true) {
     bytes_recv = recv(socket_fd, keybuffer, len_data, 0);
