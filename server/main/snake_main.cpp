@@ -49,6 +49,9 @@ int main (int argc, char *argv[]){
   
   SNAKE_MAX = atoi(argv[2]);
 
+  if (SNAKE_MAX < 2)
+    error((char*)"IT IS NOT POSSIBLE OPEN A SERVER WITH ONLY ONE PLAYER\n");
+
   int portno = atoi(argv[1]), socket_fd;
   struct sockaddr_in myself, client;
   socklen_t client_size = (socklen_t)sizeof(client);
