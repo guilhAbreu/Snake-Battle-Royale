@@ -32,10 +32,6 @@ The game starts with a snake with 4 body peaces of length. According as the snak
 
 - M/m: Turn on/off sound
 
-- I/i: Increase background music volume
-
-- D/d: Decrease background music volume
-
 - ARROW KEYS: Move snake
 
 - SPACE BAR: Speed up snake for a little piece of time
@@ -45,17 +41,3 @@ The game starts with a snake with 4 body peaces of length. According as the snak
 ## Cleaning Game Space
 
 In order to remove files created during the game and reset statistics, in root folder type on the line command **make clean**.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
