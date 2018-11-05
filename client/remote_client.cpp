@@ -15,9 +15,6 @@
 using namespace std::chrono;
 using namespace client;
 
-bool bg_enable;
-
-void bg_music_msg(Teclado *teclado);
 void print_msg(int line, int collum, char *msg, bool clr);
 void exit_msg(); // print exit message
 void my_snake_color(short int color); // show snake color
@@ -25,7 +22,7 @@ void my_snake_color(short int color); // show snake color
 int init_client(char *ip, int portno, int &socket_fd);
 void init_asamples(std::vector<Audio::Sample*> *asamples); // init asamples
 bool keyboard_map(int c, std::vector<Audio::Sample* > asamples, Audio::Player *button_player, \
-                  Audio::Player *soundboard_player, Audio::Player *background_player);
+                  Audio::Player *soundboard_player);
 void soundboard_interaction(int food_counter, int bite_sognal, std::vector<Audio::Sample*> asamples,\
                   Audio::Player *soundboard_player); // define which soundboard to play
 
@@ -43,22 +40,18 @@ int main (int argc, char *argv[]){
 
   init_client(argv[1], portno, socket_fd);
 
-  bg_enable = false;
-
   // init asamples
   std::vector<Audio::Sample* > asamples(16);
   init_asamples(&asamples);
 
   // init players
-  Audio::Player *button_player, *soundboard_player, *background_player;
+  Audio::Player *button_player, *soundboard_player;
   button_player = new Audio::Player(), soundboard_player = new Audio::Player(); 
-  background_player = new Audio::Player();  
   button_player->init(44100, 64, 0.6), soundboard_player->init(44100, 256, 2.5);
-  background_player->init(44100, 2048, 0.2);
 
   // ensure that button_player won't play at the beginning of the game
-  asamples[3]->set_position(INT32_MAX);
-  button_player->play(asamples[3]);
+  asamples[1]->set_position(INT32_MAX);
+  button_player->play(asamples[1]);
   
   // begin screen
   Tela *tela = new Tela(20, 20, 20, 20);
@@ -68,6 +61,7 @@ int main (int argc, char *argv[]){
   Teclado *teclado = new Teclado();
   teclado->init();
 
+  // Wait for OTHERS and catch your snake color
   std::this_thread::sleep_for(std::chrono::milliseconds(10));
   print_msg((int)LINES/2, -10 + (int)COLS/2, (char *)"WAITING FOR OTHERS...", true);
 
@@ -78,16 +72,17 @@ int main (int argc, char *argv[]){
   std::this_thread::sleep_for(std::chrono::milliseconds(10));
   my_snake_color(my_color);
   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-  send(socket_fd, &my_color, sizeof(short int), 0);
-  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  
+  
+  while(send(socket_fd, &my_color, sizeof(short int), 0) != sizeof(short int));
 
   bool running = true;
   char buffer[2000000];
   RelevantData *data = new RelevantData();
 
   std::thread screen_thread(threadscreen, buffer, &running, socket_fd);
-  std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
+  // wait until a valid data arrive
   {
     pos_2d p = {10,-10};
     data->PutData(p);
@@ -98,6 +93,7 @@ int main (int argc, char *argv[]){
       recv_data.clear();
       data->unserialize(buffer);
       data->copyData(recv_data);
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }while(recv_data[1].x == 10 && recv_data[1].y == -10);
   }
 
@@ -105,20 +101,20 @@ int main (int argc, char *argv[]){
   int bite_signal = 0;
   while (!exit) {
 
-    if (bg_enable && asamples[1]->finished())
-      asamples[1]->set_position(0);
-
     std::vector<pos_2d> recv_data;
     int food_counter = data->unserialize(buffer);
     data->copyData(recv_data);
     
-    if (recv_data[1].x == -1 && recv_data[1].y == -1){
+    if (recv_data[1].x == -1 && (recv_data[1].y == -1 || recv_data[1].y == -2)){
       running = false;
       screen_thread.join();
       close(socket_fd);
       print_msg((int)LINES/2, -10 + (int)COLS/2, (char *)"GAME OVER", true);
       print_msg((int)LINES/2+1, -10 + (int)COLS/2, (char *)"YOU LOSE !!!", false);
-      soundboard_player->play(asamples[5]);
+      if (recv_data[1].y == -1)
+        soundboard_player->play(asamples[3]);
+      else
+        soundboard_player->play(asamples[5]);
       std::this_thread::sleep_for(std::chrono::milliseconds(3000));
       break;
     }else if (recv_data[1].x == -10 && recv_data[1].y == 10){
@@ -126,7 +122,7 @@ int main (int argc, char *argv[]){
       screen_thread.join();
       close(socket_fd);
       print_msg((int)LINES/2, -10 + (int)COLS/2, (char *)"YOU WON !!!", true);
-      soundboard_player->play(asamples[2]);
+      soundboard_player->play(asamples[0]);
       std::this_thread::sleep_for(std::chrono::milliseconds(6000));
       break;
     }else
@@ -143,7 +139,7 @@ int main (int argc, char *argv[]){
     if (c > 0){
       send(socket_fd, &c, sizeof(int), 0);
 
-      if (keyboard_map(c, asamples, button_player, soundboard_player, background_player)){
+      if (keyboard_map(c, asamples, button_player, soundboard_player)){
         exit = true;
         running = false;
         screen_thread.join();
@@ -155,7 +151,6 @@ int main (int argc, char *argv[]){
   }
 
   // terminate objects properly
-  background_player->stop();
   button_player->stop();
   soundboard_player->stop();
   tela->stop();
@@ -164,12 +159,12 @@ int main (int argc, char *argv[]){
 }
 
 void threadscreen(char *keybuffer, bool *control, int socket_fd){
-  int len_data = 10000;
+  int len_data = 1000;
   int bytes_recv;
   while ((*control) == true) {
     bytes_recv = recv(socket_fd, keybuffer, len_data, 0);
-    if (len_data - bytes_recv < 100)
-      len_data += 100;
+    if ((len_data - bytes_recv < len_data/2))
+      len_data *=2;
     std::this_thread::sleep_for (std::chrono::milliseconds(10));
   }
   return;
@@ -191,39 +186,6 @@ int init_client(char *ip, int portno, int &socket_fd){
   else{
     return 1;
   }
-}
-
-void bg_music_msg(Teclado *teclado){
-  bool ok = false;
-  attron(COLOR_PAIR(MSG_PAIR));
-  while (!ok){
-    move((int)LINES/2, -10 + (int)COLS/2);
-    printw("DO YOU WANNA LOAD BACKGROUND MUSIC? [Y/n]");
-    move((int)LINES/2 + 1, -10 + (int)COLS/2);
-    printw("KEEP IN MIND THAT BACKGROUND MUSIC IS VERY LARGE");
-    move((int)LINES/2 + 2, -10 + (int)COLS/2);
-    printw("AND IT CAN LAST TOO MUCH TIME TO LOAD IT.");
-    refresh();
-    int c = teclado->getchar();
-    switch (c){
-      case 'Y':
-      case 'y':
-        bg_enable = true;
-        ok = true;
-        break;
-      case 'N':
-      case 'n':
-        bg_enable = false;
-        ok = true;
-        break;
-    }
-  }
-  clear();
-  move((int)LINES/2, -10 + (int)COLS/2);
-  printw("LOADING ...") ;
-  refresh();
-  attroff(COLOR_PAIR(MSG_PAIR));
-  return;
 }
 
 void my_snake_color(short int color){
@@ -267,39 +229,23 @@ void error(char *msg)
 }
 
 bool keyboard_map(int c, std::vector<Audio::Sample* > asamples, Audio::Player *button_player, \
-                  Audio::Player *soundboard_player, Audio::Player *background_player){
+                  Audio::Player *soundboard_player){
   switch (c){
     case KEY_DOWN:
     case KEY_LEFT:
     case KEY_UP:
     case KEY_RIGHT:
-      asamples[3]->set_position(0);
-      break;
-    case 'I':
-    case 'i':
-      if (!bg_enable) break;
-      background_player->volume+=0.1;
-      if (background_player->volume > 2)
-        background_player->volume = 2;
-      break;
-    case 'D':
-    case 'd':
-      if (!bg_enable) break;
-      background_player->volume-=0.1;
-      if (background_player->volume <= 0)
-        background_player->volume = 0;
+      asamples[1]->set_position(0);
       break;
     case 'm':
     case 'M':
       // turn on/off audio
-      background_player->volume =  !background_player->volume;
-      if (background_player->volume > 0) background_player->volume = 0.5;
       soundboard_player->volume = !soundboard_player->volume;
       button_player->volume = !button_player->volume;
       break;
     case 27:
       // terminate game
-      soundboard_player->play(asamples[6]);
+      soundboard_player->play(asamples[4]);
       return true;
   }
   return false;
@@ -307,24 +253,24 @@ bool keyboard_map(int c, std::vector<Audio::Sample* > asamples, Audio::Player *b
 
 void soundboard_interaction(int food_counter, int bite_signal, std::vector<Audio::Sample*> asamples, Audio::Player *soundboard_player){
   if (food_counter == 10){
-    soundboard_player->play(asamples[14]);
+    soundboard_player->play(asamples[9]);
   }
   else if (food_counter == 20){
-    soundboard_player->play(asamples[12]);
+    soundboard_player->play(asamples[10]);
   }
   else if (food_counter == 40){
-    soundboard_player->play(asamples[11]);
+    soundboard_player->play(asamples[8]);
   }
   else if(food_counter == 60){
-    soundboard_player->play(asamples[2]);
+    soundboard_player->play(asamples[0]);
   }
   else if (bite_signal){
-    soundboard_player->play(asamples[4]);
-    asamples[4]->set_position(0);
+    soundboard_player->play(asamples[2]);
+    asamples[2]->set_position(0);
   }
-  /*else if (food_counter == 0){
-    soundboard_player->play(asamples[8]);
-  }*/
+  else if (food_counter == 0){
+    soundboard_player->play(asamples[6]);
+  }
   return;
 }
 
@@ -333,23 +279,19 @@ void init_asamples(std::vector<Audio::Sample*> *asamples){
   for (int i = 0; i < asamples->size(); i++){
     (*asamples)[i] = new Audio::Sample();
   }
-  /*
-  the first position is reserved for background songs that were not chosen yet
-  */
-  if (bg_enable) (*asamples)[1]->load("audio/assets/sonic_theme.dat");
-  (*asamples)[2]->load("audio/assets/Ce_e_o_bichao.dat");
-  (*asamples)[3]->load("audio/assets/blip.dat");
-  (*asamples)[4]->load("audio/assets/bite.dat");
-  (*asamples)[5]->load("audio/assets/naovaidar.dat");
-  (*asamples)[6]->load("audio/assets/get_over_here.dat");
-  //(*asamples)[7]->load("audio/assets/come_here.dat");
-  (*asamples)[8]->load("audio/assets/mortal_kombat_theme.dat");
-  //(*asamples)[9]->load("audio/assets/finish_him.dat");
-  //(*asamples)[10]->load("audio/assets/finish_her.dat");
-  (*asamples)[11]->load("audio/assets/fatality.dat");
-  (*asamples)[12]->load("audio/assets/animality.dat");
-  //(*asamples)[13]->load("audio/assets/soul_suffer.dat");
-  (*asamples)[14]->load("audio/assets/brutality.dat");
-  //(*asamples)[15]->load("audio/assets/mario_star.dat");
+
+  (*asamples)[0]->load("audio/assets/Ce_e_o_bichao.dat");
+  (*asamples)[1]->load("audio/assets/blip.dat");
+  (*asamples)[2]->load("audio/assets/bite.dat");
+  (*asamples)[3]->load("audio/assets/naovaidar.dat");
+  (*asamples)[4]->load("audio/assets/bobao.dat");
+  (*asamples)[5]->load("audio/assets/chupaessamanga.dat");
+  (*asamples)[6]->load("audio/assets/horadoshow.dat");
+  (*asamples)[7]->load("audio/assets/fatality.dat");
+  (*asamples)[8]->load("audio/assets/animality.dat");
+  (*asamples)[9]->load("audio/assets/pao.dat");
+  (*asamples)[10]->load("audio/assets/brutality.dat");
+  //(*asamples)[11]->load("audio/assets/finish_her.dat");
+  //(*asamples)[12]->load("audio/assets/mario_star.dat");
   return;
 }

@@ -189,7 +189,12 @@ void player_management(plyr_data args){
       player_key.unlock();
     }
     if (update_value >= -2){ // Snake losed
+      thread_running[snake_ID] = false;
+      
       pos_2d end_signal = {-1,-1};
+
+      if (update_value == -1)
+        end_signal.y = -2;
 
       data->PutData(end_signal);
       data->serialize(buffer);
@@ -199,8 +204,6 @@ void player_management(plyr_data args){
         thread_running[update_value] = false;
         send(connection_fd[update_value], buffer, data->get_data_size(), 0);
       }
-
-      thread_running[snake_ID] = false;
       break;
     }
     if (update_value == -5){ // Snake won
