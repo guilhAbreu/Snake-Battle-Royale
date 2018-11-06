@@ -13,8 +13,8 @@ SERIAL_DIR = serial
 REMOTE_DIR = client
 
 # Programas a serem gerados
-TARGET = snake\ single\ player
-REMOTE_TARGET = remote-controler
+TARGET = snake\ battle\ royale\ server
+REMOTE_TARGET = snake\ battle\ royale\ client
 
 # Arquivos Fontes
 MAIN_SRC := $(shell find $(MAIN_DIR) -name '*.cpp')
