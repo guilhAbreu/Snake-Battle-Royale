@@ -160,6 +160,8 @@ void player_management(plyr_data args){
   int interation = 0;
   
   std::vector<Snake *> *snake_vector = snake_list->get_snakes();
+  std::vector<Corpo*> *this_snake = (*snake_vector)[snake_ID]->get_corpos();
+
   RelevantData *data = new RelevantData();
 
   thread_running[snake_ID] = true;
@@ -244,8 +246,12 @@ void player_management(plyr_data args){
     if (interation > 40)
       impulse = 0;
 
+    pos_2d this_snake_vel = (*this_snake)[0]->get_velocidade();
     std::this_thread::sleep_for (std::chrono::milliseconds(100 - impulse));
-    
+    if (this_snake_vel.y != 0)
+      std::this_thread::sleep_for (std::chrono::milliseconds(50));
+
+
     if (impulse || interation){
       if (interation == 40)
         impulse = 0;
