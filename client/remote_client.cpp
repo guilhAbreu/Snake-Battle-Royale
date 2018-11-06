@@ -9,6 +9,7 @@
 #include "../include/view/snake_view.hpp"
 #include "../include/player/remote_keyboard.hpp"
 #include "../serial/serializable.hpp"
+
 #include "../include/model/audio_model.hpp"
 #include "../include/view/audio_view.hpp"
 
@@ -38,7 +39,11 @@ int main (int argc, char *argv[]){
   }
   portno = atoi(argv[2]);
 
-  init_client(argv[1], portno, socket_fd);
+  if (init_client(argv[1], portno, socket_fd) != 0)
+    error((char *)"Unable to connect with the server\n");
+  else{
+    std::cout << "Connecttion attempt has been succeed" << std::endl;
+  }
 
   // init asamples
   std::vector<Audio::Sample* > asamples(16);
@@ -177,12 +182,7 @@ int init_client(char *ip, int portno, int &socket_fd){
   target.sin_port = htons(portno);
   inet_aton(ip, &(target.sin_addr));
 
-  if (connect(socket_fd, (struct sockaddr*)&target, sizeof(target)) != 0) {
-    return 0;
-  }
-  else{
-    return 1;
-  }
+  return connect(socket_fd, (struct sockaddr*)&target, sizeof(target));
 }
 
 void my_snake_color(short int color){
