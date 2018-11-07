@@ -31,10 +31,12 @@ RA: 173691
 #define SNAKE2_PAIR 2
 #define SNAKE3_PAIR 3
 #define SNAKE4_PAIR 4
+#define SNAKE5_PAIR 5
+#define SNAKE6_PAIR 6
 
-#define FOOD_PAIR 5
-#define MSG_PAIR 6
-#define BG_PAIR 7
+#define FOOD_PAIR 7
+#define MSG_PAIR 8
+#define BG_PAIR 9
 
 class Tela {
   private:
