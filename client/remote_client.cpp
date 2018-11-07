@@ -71,7 +71,7 @@ int main (int argc, char *argv[]){
   print_msg((int)LINES/2, -10 + (int)COLS/2, (char *)"WAITING FOR OTHERS...", true);
 
   short int my_color = -1;
-  while(my_color <= 0 || my_color > 4)
+  while(my_color <= 0 || my_color > 6)
     recv(socket_fd, &my_color, sizeof(short int), 0);
 
   std::this_thread::sleep_for(std::chrono::milliseconds(10));
