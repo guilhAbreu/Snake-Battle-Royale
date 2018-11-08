@@ -64,7 +64,7 @@ int main (int argc, char *argv[]){
   for(int i = 0; i < SNAKE_MAX; i++){
     Snake *snake = create_snake(4, p);
     snake_list->add_snake(snake);
-    p.y-=5;
+    p.y-= (int)(LINES-1)/SNAKE_MAX;
     if (p.y < 0)
       error((char *)"SNAKE_MAX is too large\n");
   }
@@ -122,13 +122,9 @@ int main (int argc, char *argv[]){
     connection_thread[i].join();
   }
 
-  int i = 0;
-  while(i < SNAKE_MAX){
-    if (recv(connection_fd[i], NULL, 1, 0) == 0)
-      i++;
-  }
+  shutdown(socket_fd, SHUT_RDWR);
 
-  std::this_thread::sleep_for (std::chrono::milliseconds(2000));
+  std::this_thread::sleep_for (std::chrono::milliseconds(6000));
   tela->stop();
   close(socket_fd);
   return 0;
@@ -188,7 +184,7 @@ void player_management(plyr_data args){
       physic->feed_snake();
       player_key.unlock();
     }
-    if (update_value >= -2){ // Snake losed
+    if (update_value >= -2){ // Snake lose
       thread_running[snake_ID] = false;
       
       pos_2d end_signal = {-1,-1};
@@ -201,8 +197,12 @@ void player_management(plyr_data args){
       send(connection_fd[snake_ID], buffer, data->get_data_size(), 0);
 
       if(update_value >= 0){
-        thread_running[update_value] = false;
-        send(connection_fd[update_value], buffer, data->get_data_size(), 0);
+        player_key.lock();
+        if (thread_running[update_value]){
+          send(connection_fd[update_value], buffer, data->get_data_size(), 0);
+          thread_running[update_value] = false;
+        }
+        player_key.unlock();
       }
       break;
     }
@@ -333,5 +333,5 @@ int init_server(int portno, int &socket_fd, struct sockaddr_in &myself){
 
 void error(char *msg){
     perror(msg);
-    exit(1);
+    exit(EXIT_FAILURE);
 }

@@ -4,6 +4,7 @@
 #include <vector>
 #include <ncurses.h>
 #include <string>
+#include <stdlib.h>
 
 #include "../include/model/snake_model.hpp"
 #include "../include/view/snake_view.hpp"
@@ -102,7 +103,19 @@ int main (int argc, char *argv[]){
   bool exit = false;
   int bite_signal = 0;
   while (!exit) {
-
+    if (!running){
+      // terminate objects properly
+        running = false;
+        screen_thread.join();
+        button_player->stop();
+        soundboard_player->stop();
+        tela->stop();
+        teclado->stop();
+        close(socket_fd);
+        print_msg(LINES/2, -10 + COLS/2, (char *)"YOU WERE DISCONNECTED...", true);
+        return 0;
+    }
+    
     std::vector<pos_2d> recv_data;
     int food_counter = data->unserialize(buffer);
     data->copyData(recv_data);
@@ -139,7 +152,18 @@ int main (int argc, char *argv[]){
     // read keys from keyboard
     int c = teclado->getchar();
     if (c > 0){
-      send(socket_fd, &c, sizeof(int), 0);
+      if (send(socket_fd, &c, sizeof(int), 0) == -1){
+        // terminate objects properly
+        running = false;
+        screen_thread.join();
+        button_player->stop();
+        soundboard_player->stop();
+        tela->stop();
+        teclado->stop();
+        close(socket_fd);
+        print_msg(LINES/2, -10 + COLS/2, (char *)"YOU WERE DISCONNECTED...", true);
+        return 0;
+      }
 
       if (keyboard_map(c, asamples, button_player, soundboard_player)){
         exit = true;
@@ -167,6 +191,10 @@ void threadscreen(char *keybuffer, bool *control, int socket_fd){
     bytes_recv = recv(socket_fd, keybuffer, len_data, 0);
     if ((len_data - bytes_recv < len_data/2))
       len_data *=2;
+    if(bytes_recv == 0){
+      *control = false;
+      return;
+    }
     std::this_thread::sleep_for (std::chrono::milliseconds(10));
   }
   return;
