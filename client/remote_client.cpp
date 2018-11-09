@@ -185,15 +185,15 @@ int main (int argc, char *argv[]){
 }
 
 void threadscreen(char *keybuffer, bool *control, int socket_fd){
-  int len_data = 1000;
+  int len_data = 1000, esc_value = 27;
   int bytes_recv;
   while ((*control) == true) {
     bytes_recv = recv(socket_fd, keybuffer, len_data, 0);
     if ((len_data - bytes_recv < len_data/2))
       len_data *=2;
-    if(bytes_recv == 0){
+    if (bytes_recv == 0){
+      send(socket_fd, &esc_value, sizeof(int), 0);
       *control = false;
-      return;
     }
     std::this_thread::sleep_for (std::chrono::milliseconds(10));
   }

@@ -109,13 +109,19 @@ int main (int argc, char *argv[]){
 
   int snakes_in_game;
   do{
-    tela->update();
     snakes_in_game = 0;
     for (int i = 0; i < SNAKE_MAX; i++){
       if (thread_running[i])
         snakes_in_game++;
     }
-    std::this_thread::sleep_for (std::chrono::milliseconds(100));
+
+    if (snakes_in_game){
+      player_key.lock();
+      tela->update(thread_running);
+      player_key.unlock();
+    }
+
+    std::this_thread::sleep_for (std::chrono::milliseconds(150));
   }while(snakes_in_game > 0);
 
   for (int i = 0; i < SNAKE_MAX; i++){
@@ -176,7 +182,9 @@ void player_management(plyr_data args){
   while (thread_running[snake_ID]) {
     char buffer[2000000];
     
+    player_key.lock();
     short int update_value = physic->update(snake_ID, thread_running);
+    player_key.unlock();
 
     if (update_value == -4){ // Snake ate
       food_counter++;
