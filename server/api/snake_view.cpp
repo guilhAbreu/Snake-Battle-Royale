@@ -55,14 +55,16 @@ void Tela::get_server(int portno, int socket, int connection_fd,\
   this->client = client;
 }
 
-void Tela::update() {
+void Tela::update(bool *ingame) {
   std::vector<Snake*> *s = this->lista->get_snakes();
 
   //remove everything from the screen
   clear();
   int i, j;
   for (int k =0; k < s->size(); k++){
-    
+    if (!ingame[k])
+      continue;
+
     std::vector<Corpo *> *corpos = (*s)[k]->get_corpos();
 
     // Draw bodys on the screen
