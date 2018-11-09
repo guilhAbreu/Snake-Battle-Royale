@@ -55,7 +55,7 @@ class Tela {
     void catch_param(ListaDeSnakes *lds, std::vector<pos_2d> *food_pos);
     void stop(); // stop screen
     void init(); // init screen
-    void update(); // update screen
+    void update(bool *ingame); // update screen
     void update(std::vector<pos_2d> v);
     void get_server(int portno, int socket, int connection,\
                             struct sockaddr_in myself, struct sockaddr_in client);
