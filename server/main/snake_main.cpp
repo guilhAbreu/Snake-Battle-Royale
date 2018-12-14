@@ -39,6 +39,7 @@ Snake *create_snake(unsigned int length, pos_2d p); // create snake with length 
 int init_server(int portno, int &socket_fd, struct sockaddr_in &myself);
 void error(char *msg);
 void player_management(plyr_data args);
+void game_run(int portno, int socket_fd, struct sockaddr_in myself, Tela *tela);
 
 int main (int argc, char *argv[]){
   if (argc < 3)
@@ -58,6 +59,20 @@ int main (int argc, char *argv[]){
   // begin screen
   Tela *tela = new Tela(20, 20, 20, 20);
   tela->init();
+
+  while(true){
+    game_run(portno, socket_fd, myself, tela);
+    std::this_thread::sleep_for (std::chrono::milliseconds(5000));
+    clear();refresh();
+  }
+  
+  shutdown(socket_fd, SHUT_RDWR);
+  tela->stop();
+  close(socket_fd);
+  return 0;
+}
+
+void game_run (int portno, int socket_fd, struct sockaddr_in myself, Tela *tela){
 
   ListaDeSnakes *snake_list = new ListaDeSnakes();
   pos_2d p = {4, (float)LINES - 1};
@@ -128,12 +143,9 @@ int main (int argc, char *argv[]){
     connection_thread[i].join();
   }
 
-  shutdown(socket_fd, SHUT_RDWR);
-
   std::this_thread::sleep_for (std::chrono::milliseconds(6000));
-  tela->stop();
-  close(socket_fd);
-  return 0;
+  
+  return;
 }
 
 void player_management(plyr_data args){
@@ -294,7 +306,7 @@ bool keyboard_map(int c, int snake_ID, Fisica *f, int *impulse){
         *impulse = 50;
       break;
     case 27:
-      // terminate game
+      // term/inate game
       return false;
   }
   return true;
