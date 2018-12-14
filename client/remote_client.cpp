@@ -30,6 +30,7 @@ void soundboard_interaction(int food_counter, int bite_sognal, std::vector<Audio
 
 void error(char *msg);
 void threadscreen(char *keybuffer, bool *control, int socket_fd);
+bool is_equal(std::vector<pos_2d> a, std::vector<pos_2d> b);
 
 int main (int argc, char *argv[]){
   int socket_fd, portno;
@@ -102,6 +103,7 @@ int main (int argc, char *argv[]){
 
   bool exit = false;
   int bite_signal = 0;
+  std::vector<pos_2d> last_data(0);
   while (!exit) {
     if (!running){
       // terminate objects properly
@@ -140,9 +142,11 @@ int main (int argc, char *argv[]){
       soundboard_player->play(asamples[0]);
       std::this_thread::sleep_for(std::chrono::milliseconds(6000));
       break;
-    }else
+    }else if (!is_equal(recv_data, last_data))
       tela->update(recv_data);
     
+    last_data.assign(recv_data.begin(), recv_data.end());
+
     data->clean();
 
     bite_signal = food_counter -bite_signal;
@@ -319,4 +323,19 @@ void init_asamples(std::vector<Audio::Sample*> *asamples){
   //(*asamples)[11]->load("audio/assets/finish_her.dat");
   //(*asamples)[12]->load("audio/assets/mario_star.dat");
   return;
+}
+
+bool is_equal(std::vector<pos_2d> a, std::vector<pos_2d> b){
+
+  if (a.size() != b.size())
+    return false;
+  
+  int i = 0;
+  while((a[i].x == b[i].x) && (a[i].y == b[i].y) && (i < a.size()))
+    i++;
+  
+  if (i == a.size())
+    return true;
+
+  return false;
 }
