@@ -8,7 +8,6 @@ void threadfun (int *keybuffer, int *control)
   while ((*control) == 1) {
     c = getch();
     if (c!=ERR) (*keybuffer) = c;
-    std::this_thread::sleep_for (std::chrono::milliseconds(10));
   }
   return;
 }

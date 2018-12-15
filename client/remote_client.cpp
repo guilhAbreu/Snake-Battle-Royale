@@ -66,16 +66,18 @@ int main (int argc, char *argv[]){
   Teclado *teclado = new Teclado();
   teclado->init();
   
-  int ans;
+  int ans = 0;
   do{
     button_player->volume = 0.6; soundboard_player->volume = 2.5;
     game_run(button_player, soundboard_player, asamples, tela, teclado, portno, argv[1]);
     button_player->volume = 0; soundboard_player->volume = 0;
     rewind_samples(&asamples);
-    print_msg((int)LINES/2, -10 + (int)COLS/2, (char *)"Do you wanna play", true);
+    print_msg((int)LINES/2 + 0, -10 + (int)COLS/2, (char *)"Do you wanna play", true);
     print_msg((int)LINES/2 + 1, -15 + (int)COLS/2, (char *)"one more time on this server?", false);
-    print_msg((int)LINES/2 + 1, -5 + (int)COLS/2, (char *)"[Y/n]", false);
-    ans = getch();
+    print_msg((int)LINES/2 + 2, -05 + (int)COLS/2, (char *)"[Y/n]", false);
+    do{
+      ans = teclado->getchar();
+    }while(ans != 'Y' && ans != 'y' && ans != 'N' && ans != 'n');
   }while(ans == 'Y' || ans == 'y');
 
   // terminate objects properly

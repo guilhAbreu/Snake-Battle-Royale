@@ -109,7 +109,7 @@ void Tela::update(std::vector<pos_2d> data){
     for (int z = k; z < k + size_snake; z++){
       int i = (int)data[z].y * (this->maxI / this->maxX);
       int j = (int)data[z].x * (this->maxI / this->maxX);
-      if (mvaddch(i,j,SNAKE_SHAPE) == ERR) {attroff(COLOR_PAIR(snake_pair));return;}
+      if (mvaddch(i,j,SNAKE_SHAPE) == ERR) break;
     }
     attroff(COLOR_PAIR(snake_pair));
     k += size_snake;
@@ -121,7 +121,7 @@ void Tela::update(std::vector<pos_2d> data){
 
     int i = (int)data[z].y * (this->maxI / this->maxX);
     int j = (int)data[z].x * (this->maxI / this->maxX);
-    mvaddch(i, j, FOOD_SHAPE);
+    if (mvaddch(i, j, FOOD_SHAPE) == ERR) continue;
   }
   attroff(COLOR_PAIR(FOOD_PAIR));
 
