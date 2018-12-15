@@ -32,23 +32,21 @@ void error(char *msg);
 void threadscreen(char *keybuffer, bool *control, int socket_fd);
 bool is_equal(std::vector<pos_2d> a, std::vector<pos_2d> b);
 
-int main (int argc, char *argv[]){
-  int socket_fd, portno;
+void game_run(Audio::Player *button_player,Audio::Player *soundboard_player, std::vector<Audio::Sample*> &asamples,\
+              Tela *tela,Teclado *teclado, int portno, char *IP);
+void rewind_samples(std::vector<Audio::Sample *> *asamples);
 
+int main (int argc, char *argv[]){
+  int portno;
+  
   if (argc < 3) {
-    fprintf(stderr,"usage %s IP_TARGET port\n", argv[0]);
+    fprintf(stderr,"usage %s IP_TARGET PORT\n", argv[0]);
     exit(EXIT_FAILURE);
   }
   portno = atoi(argv[2]);
-
-  if (init_client(argv[1], portno, socket_fd) != 0)
-    error((char *)"Unable to connect with the server\n");
-  else{
-    std::cout << "Connecttion attempt has been succeed" << std::endl;
-  }
-
+  
   // init asamples
-  std::vector<Audio::Sample* > asamples(16);
+  std::vector<Audio::Sample* > asamples(11);
   init_asamples(&asamples);
 
   // init players
@@ -67,6 +65,38 @@ int main (int argc, char *argv[]){
   // begin keyboard interface
   Teclado *teclado = new Teclado();
   teclado->init();
+  
+  int ans;
+  do{
+    button_player->volume = 0.6; soundboard_player->volume = 2.5;
+    game_run(button_player, soundboard_player, asamples, tela, teclado, portno, argv[1]);
+    button_player->volume = 0; soundboard_player->volume = 0;
+    rewind_samples(&asamples);
+    print_msg((int)LINES/2, -10 + (int)COLS/2, (char *)"Do you wanna play", true);
+    print_msg((int)LINES/2 + 1, -15 + (int)COLS/2, (char *)"one more time on this server?", false);
+    print_msg((int)LINES/2 + 1, -5 + (int)COLS/2, (char *)"[Y/n]", false);
+    ans = getch();
+  }while(ans == 'Y' || ans == 'y');
+
+  // terminate objects properly
+  button_player->stop();
+  soundboard_player->stop();
+  tela->stop();
+  teclado->stop();
+  return 0;
+}
+
+
+void game_run(Audio::Player *button_player,Audio::Player *soundboard_player, std::vector<Audio::Sample*> &asamples,\
+              Tela *tela,Teclado *teclado, int portno, char *IP){
+  
+  int socket_fd;
+
+  if (init_client(IP, portno, socket_fd) != 0)
+    error((char *)"Unable to connect with the server\n");
+  else{
+    std::cout << "Connecttion attempt has been succeed" << std::endl;
+  }
 
   // Wait for OTHERS and catch your snake color
   std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -109,13 +139,9 @@ int main (int argc, char *argv[]){
       // terminate objects properly
         running = false;
         screen_thread.join();
-        button_player->stop();
-        soundboard_player->stop();
-        tela->stop();
-        teclado->stop();
         close(socket_fd);
         print_msg(LINES/2, -10 + COLS/2, (char *)"YOU WERE DISCONNECTED...", true);
-        return 0;
+        return;
     }
     
     std::vector<pos_2d> recv_data;
@@ -160,13 +186,9 @@ int main (int argc, char *argv[]){
         // terminate objects properly
         running = false;
         screen_thread.join();
-        button_player->stop();
-        soundboard_player->stop();
-        tela->stop();
-        teclado->stop();
         close(socket_fd);
         print_msg(LINES/2, -10 + COLS/2, (char *)"YOU WERE DISCONNECTED...", true);
-        return 0;
+        return;
       }
 
       if (keyboard_map(c, asamples, button_player, soundboard_player)){
@@ -180,12 +202,7 @@ int main (int argc, char *argv[]){
     }
   }
 
-  // terminate objects properly
-  button_player->stop();
-  soundboard_player->stop();
-  tela->stop();
-  teclado->stop();
-  return 0;
+  return;
 }
 
 void threadscreen(char *keybuffer, bool *control, int socket_fd){
@@ -303,6 +320,13 @@ void soundboard_interaction(int food_counter, int bite_signal, std::vector<Audio
   return;
 }
 
+void rewind_samples(std::vector<Audio::Sample *> *asamples){
+  for (int i = 0; i < asamples->size(); i++){
+    (*asamples)[i]->set_position(0);
+  }
+  
+  return;
+}
 
 void init_asamples(std::vector<Audio::Sample*> *asamples){
   for (int i = 0; i < asamples->size(); i++){
@@ -320,8 +344,6 @@ void init_asamples(std::vector<Audio::Sample*> *asamples){
   (*asamples)[8]->load("audio/assets/animality.dat");
   (*asamples)[9]->load("audio/assets/pao.dat");
   (*asamples)[10]->load("audio/assets/brutality.dat");
-  //(*asamples)[11]->load("audio/assets/finish_her.dat");
-  //(*asamples)[12]->load("audio/assets/mario_star.dat");
   return;
 }
 
