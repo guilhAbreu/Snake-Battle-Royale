@@ -8,7 +8,7 @@
 
 #include "../include/model/snake_model.hpp"
 #include "../include/view/snake_view.hpp"
-#include "../include/player/remote_keyboard.hpp"
+#include "../include/client/remote_keyboard.hpp"
 #include "../serial/serializable.hpp"
 
 #include "../include/model/audio_model.hpp"
