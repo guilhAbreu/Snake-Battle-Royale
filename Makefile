@@ -6,9 +6,8 @@ PORTAUDIO_FLAGS = -lportaudio -ljack -lrt -lasound -lm
 
 # Diretorios
 ASSETS_DIR = audio/assets
-STAT_DIR = statistics
-MAIN_DIR = server/main
-API_DIR = server/api
+MAIN_DIR = server
+API_DIR = src
 SERIAL_DIR = serial
 REMOTE_DIR = client
 
