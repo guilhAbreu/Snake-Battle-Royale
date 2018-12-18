@@ -11,6 +11,7 @@
 #include "../include/controler/keyboard_controler.hpp"
 
 #include "../serial/serializable.hpp"
+#include "../include/client/remote_keyboard.hpp"
 
 #include <string>
 #include <cstring>
@@ -33,13 +34,15 @@ typedef struct player_info{
 
 using namespace std::chrono;
 
+void print_msg(int line, int collum, char *msg, bool clr);
+
 uint64_t get_now_ms();
 bool keyboard_map(int c, int snake_ID, Fisica *f, int *impulse);
 Snake *create_snake(unsigned int length, pos_2d p); // create snake with length bodys
 int init_server(int portno, int &socket_fd, struct sockaddr_in &myself);
 void error(char *msg);
 void player_management(plyr_data args);
-void game_run(int portno, int socket_fd, struct sockaddr_in myself, Tela *tela);
+bool game_run(int portno, int socket_fd, struct sockaddr_in myself, Tela *tela);
 
 int main (int argc, char *argv[]){
   if (argc < 3)
@@ -60,19 +63,21 @@ int main (int argc, char *argv[]){
   Tela *tela = new Tela(20, 20, 20, 20);
   tela->init();
 
-  while(true){
-    game_run(portno, socket_fd, myself, tela);
+  while(game_run(portno, socket_fd, myself, tela)){
     std::this_thread::sleep_for (std::chrono::milliseconds(5000));
     clear();refresh();
   }
   
+  print_msg((int)LINES/2 + 1, -10 + (int)COLS/2, (char *)"Done!!!", false);
+  std::this_thread::sleep_for (std::chrono::milliseconds(2000));
+
   shutdown(socket_fd, SHUT_RDWR);
   tela->stop();
   close(socket_fd);
   return 0;
 }
 
-void game_run (int portno, int socket_fd, struct sockaddr_in myself, Tela *tela){
+bool game_run (int portno, int socket_fd, struct sockaddr_in myself, Tela *tela){
 
   ListaDeSnakes *snake_list = new ListaDeSnakes();
   pos_2d p = {4, (float)LINES - 1};
@@ -115,11 +120,36 @@ void game_run (int portno, int socket_fd, struct sockaddr_in myself, Tela *tela)
     connection_thread[i].swap(new_thread);
   }
 
+  print_msg(0,0, (char *)"Waiting PLayers...", true);
+
   // Wait for all players
+  client::Teclado *my_keyboard = new client::Teclado();
+  my_keyboard->init(false);
+  bool terminate = false;
   int j = 0;
   while(j < SNAKE_MAX){
     if (thread_running[j] == true)
       j++;
+
+    if (j == 0){
+      int c = my_keyboard->getchar();
+      if (c == 27){
+        terminate = true;
+        break;
+      }
+    }
+  }
+
+  if (terminate){
+    print_msg((int)LINES/2, -10 + (int)COLS/2, (char *)"Exiting...", true);
+    std::this_thread::sleep_for (std::chrono::milliseconds(100));
+
+    shutdown(socket_fd, SHUT_RDWR);
+    for (int i = 0; i < SNAKE_MAX; i++){
+      connection_thread[i].join();
+    }
+
+    return false;
   }
 
   int snakes_in_game;
@@ -136,16 +166,16 @@ void game_run (int portno, int socket_fd, struct sockaddr_in myself, Tela *tela)
       player_key.unlock();
     }
 
-    std::this_thread::sleep_for (std::chrono::milliseconds(150));
+    std::this_thread::sleep_for (std::chrono::milliseconds(100));
   }while(snakes_in_game > 0);
 
   for (int i = 0; i < SNAKE_MAX; i++){
     connection_thread[i].join();
   }
 
+  //my_keyboard->stop();
   std::this_thread::sleep_for (std::chrono::milliseconds(6000));
-  
-  return;
+  return true;
 }
 
 void player_management(plyr_data args){
@@ -160,6 +190,9 @@ void player_management(plyr_data args){
   socklen_t client_size = (socklen_t)sizeof(client);
   
   connection_fd[snake_ID] = accept(socket_fd, (struct sockaddr*)&client, &client_size);
+
+  if (connection_fd[snake_ID]  == -1)
+    return;
 
   // begin keyboard interface
   Teclado *teclado = new Teclado();
@@ -354,4 +387,14 @@ int init_server(int portno, int &socket_fd, struct sockaddr_in &myself){
 void error(char *msg){
     perror(msg);
     exit(EXIT_FAILURE);
+}
+
+void print_msg(int line, int collum, char *msg, bool clr){
+  if (clr) clear();
+  attron(COLOR_PAIR(MSG_PAIR));
+  move(line, collum);
+  printw(msg);
+  attroff(COLOR_PAIR(MSG_PAIR));
+  refresh();
+  return;
 }
