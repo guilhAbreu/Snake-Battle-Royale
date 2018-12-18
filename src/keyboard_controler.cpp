@@ -28,7 +28,6 @@ int Teclado::getchar() {
 void threadfun (int *keybuffer, int *control, int *socket_fd, int *connection_fd){
   while ((*control) == 1) {
     recv(*connection_fd, keybuffer, sizeof(int), 0);
-    std::this_thread::sleep_for (std::chrono::milliseconds(10));
   }
   return;
 }
