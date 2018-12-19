@@ -6,6 +6,16 @@
 #include <string>
 #include <stdlib.h>
 
+/*Socket*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include "../include/model/snake_model.hpp"
 #include "../include/view/snake_view.hpp"
 #include "../include/client/remote_keyboard.hpp"

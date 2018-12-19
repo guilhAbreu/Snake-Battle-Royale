@@ -12,16 +12,6 @@ RA: 173691
 #include <string>
 #include <cstring>
 
-/*Socket*/
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #include "../model/snake_model.hpp"
 
 #define SNAKE_SHAPE 'O'
@@ -44,9 +34,6 @@ class Tela {
     std::vector<pos_2d> *food_pos;
     int maxI, maxJ;
     float maxX, maxY;
-    int socket_fd, connection_fd, portno;
-    struct sockaddr_in myself, client;
-    socklen_t client_size = (socklen_t)sizeof(client);
 
   public:
     Tela(ListaDeSnakes *lds, std::vector<pos_2d> *food_pos, int maxI, int maxJ, float maxX, float maxY);
@@ -57,8 +44,6 @@ class Tela {
     void init(); // init screen
     void update(bool *ingame); // update screen
     void update(std::vector<pos_2d> v);
-    void get_server(int portno, int socket, int connection,\
-                            struct sockaddr_in myself, struct sockaddr_in client);
 };
 
 #endif

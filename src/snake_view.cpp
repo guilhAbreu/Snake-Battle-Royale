@@ -46,15 +46,6 @@ void Tela::init() {
   refresh();
 }
 
-void Tela::get_server(int portno, int socket, int connection_fd,\
-                          struct sockaddr_in myself, struct sockaddr_in client){
-
-  this->socket_fd = socket;
-  this->connection_fd = connection_fd;
-  this->myself = myself;
-  this->client = client;
-}
-
 void Tela::update(bool *ingame) {
   std::vector<Snake*> *s = this->lista->get_snakes();
 
