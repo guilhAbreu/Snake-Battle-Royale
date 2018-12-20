@@ -37,7 +37,7 @@ extern int SNAKE_MAX;
 
 bool keyboard_map(int c, int snake_ID, Fisica *f, int *impulse);
 Snake *create_snake(unsigned int length, pos_2d p); // create snake with length bodys
-int init_server(int portno, int &socket_fd, struct sockaddr_in &myself);
+int init_server(int portno, int &socket_fd, struct sockaddr_in &myself, char *IP);
 void player_management(plyr_data args);
 bool game_run(int portno, int socket_fd, struct sockaddr_in myself, Tela *tela);
 

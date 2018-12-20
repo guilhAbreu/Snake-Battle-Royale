@@ -13,7 +13,7 @@ In order to be able to compile and run the game, please, install the follow pack
 In order to run the game, in root folder type on the line command
 
 <p align="center">
-  <b>make server PORT=PORTNUMBER PLAYERS=N</b>
+  <b>make server IP=IP_SERVER PORT=PORTNUMBER PLAYERS=N</b>
 </p>
 
 to run the server. You have to choose a avaiable __PORTNUMBER__ and the number of players __N__. After that, ou just have to run the client program in another terminal or another machine typing 
@@ -36,8 +36,8 @@ The game starts with a snake with 4 body peaces of length. According as the snak
 
 - SPACE BAR: Speed up snake for a little piece of time
 
-- ESC: Exit game
+- ESC: Exit game (At the server, while none players are connected, it is possible close the server pressing this key)
 
 ## Cleaning Game Space
 
-In order to remove files created during the game and reset statistics, in root folder type on the line command **make clean**.
+In order to remove files created during the game, in root folder type on the line command **make clean**.

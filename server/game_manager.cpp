@@ -292,7 +292,7 @@ Snake *create_snake(unsigned int length, pos_2d p){
   return snake;
 }
 
-int init_server(int portno, int &socket_fd, struct sockaddr_in &myself){
+int init_server(int portno, int &socket_fd, struct sockaddr_in &myself, char *IP){
   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
   /*Create socket*/
@@ -303,7 +303,7 @@ int init_server(int portno, int &socket_fd, struct sockaddr_in &myself){
   bzero((char *) &myself, sizeof(myself));/*set all values into the struct to 0*/
   
   myself.sin_family = AF_INET;
-  myself.sin_addr.s_addr = INADDR_ANY; /*Store the IP Adress of the machine on which the server is running*/
+  inet_aton(IP, &(myself.sin_addr));/*Store IP Address*/
   myself.sin_port = htons(portno);/*Convert portno into network bytes order*/
   
   if (bind(socket_fd, (struct sockaddr*)&myself, sizeof(myself)) != 0) {

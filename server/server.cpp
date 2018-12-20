@@ -7,19 +7,19 @@
 using namespace std::chrono;
 
 int main (int argc, char *argv[]){
-  if (argc < 3)
-    error((char *)"PORT NUMBER and PLAYERS NUMBER must be passed\n");
+  if (argc < 4)
+    error((char *)"IP address, PORT number and PLAYERS number must be passed\n");
   
-  SNAKE_MAX = atoi(argv[2]);
+  SNAKE_MAX = atoi(argv[3]);
 
   if (SNAKE_MAX < 2)
     error((char*)"IT IS NOT POSSIBLE OPEN A SERVER WITH ONLY ONE PLAYER\n");
 
-  int portno = atoi(argv[1]), socket_fd;
+  int portno = atoi(argv[2]), socket_fd;
   struct sockaddr_in myself, client;
   socklen_t client_size = (socklen_t)sizeof(client);
   
-  init_server(portno, socket_fd, myself);
+  init_server(portno, socket_fd, myself, argv[1]);
   
   // begin screen
   Tela *tela = new Tela(20, 20, 20, 20);
