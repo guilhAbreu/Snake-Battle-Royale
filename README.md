@@ -1,5 +1,7 @@
 # Snake Game Multiplayer Project
 
+<img src="Figures/gameplay.png" alt="Gameplay">
+
 ## Dependencies
 
 In order to be able to compile and run the game, please, install the follow packages on your linux system:
