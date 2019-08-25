@@ -1,6 +1,6 @@
 # Snake Game Multiplayer Project
 
-<img src="Figures/gameplay.png" alt="Gameplay">
+<img src="figures/gameplay.png" alt="Gameplay">
 
 ## Dependencies
 
